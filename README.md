@@ -4,26 +4,39 @@
 [![npm downloads](https://img.shields.io/npm/dm/@supernova123/docker-mcp-server)](https://www.npmjs.com/package/@supernova123/docker-mcp-server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![MCP](https://img.shields.io/badge/MCP-compatible-green)](https://modelcontextprotocol.io)
+[![Claude Desktop](https://img.shields.io/badge/Claude%20Desktop-compatible-purple)](https://claude.ai)
 
 **The Docker MCP server designed for agents that need their containers to stay running.**
 
-Health checks, auto-restart, Compose lifecycle, log streaming — all from your MCP client.
+> **Without this:** Your agent deploys a container, it crashes at 3am, and nobody notices until the user complains. Compose stacks drift. Health checks are manual. Logs are scattered across terminals.
+>
+> **With this:** Your agent checks health, watches for readiness, restarts crashed containers, and follows logs, all through a single MCP interface. Containers stay running because your agent knows how to keep them running.
 
-## Features
+## Why This Server?
 
-- **25 tools** covering containers, images, Compose, health, logs, exec, networks, and volumes
-- **Health & self-healing**: check health, watch for readiness, set restart policies
-- **Docker Compose as tools**: bring up, tear down, restart, and monitor Compose stacks
-- **Log streaming**: follow container logs in real-time
-- **Agent-friendly**: designed for autonomous agents managing their own infrastructure
+There are 11+ Docker MCP servers on npm. Most are stale, GPL-licensed, or only cover basic CRUD. This one is different:
+
+| | This server | ckreiling/mcp-server-docker | docker/hub-mcp |
+|---|---|---|---|
+| **License** | MIT | GPL-3.0 | Apache-2.0 |
+| **Last updated** | Active | Jun 2025 (stale) | Active |
+| **Health checks** | ✅ HTTP/TCP/exec probes | ❌ | ❌ |
+| **Auto-restart** | ✅ set_restart_policy | ❌ | ❌ |
+| **Compose lifecycle** | ✅ up/down/ps/logs/restart | ❌ | ❌ |
+| **Log streaming** | ✅ tail + timestamp filter | Basic | Basic |
+| **Agent positioning** | ✅ Built for agents | Generic Docker | Registry API |
 
 ## Quick Start
+
+One command to run:
 
 ```bash
 npx @supernova123/docker-mcp-server
 ```
 
-### Claude Desktop / Cursor Config
+### Claude Desktop / Cursor / VS Code Config
+
+Add to your MCP settings:
 
 ```json
 {
@@ -34,6 +47,12 @@ npx @supernova123/docker-mcp-server
     }
   }
 }
+```
+
+### Claude Code
+
+```bash
+claude mcp add docker -- npx -y @supernova123/docker-mcp-server
 ```
 
 ## Tools
