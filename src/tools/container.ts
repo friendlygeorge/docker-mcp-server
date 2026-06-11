@@ -74,7 +74,11 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
         const container = docker.getContainer(params.container_id);
         await container.stop({ t: params.timeout ?? 10 });
         return { content: [{ type: "text", text: `Container ${params.container_id} stopped.` }] };
-      } catch (error) {
+      } catch (error: any) {
+        // 304 means container is already stopped — treat as success
+        if (error?.statusCode === 304) {
+          return { content: [{ type: "text", text: `Container ${params.container_id} was already stopped.` }] };
+        }
         return { content: [{ type: "text", text: `Error: ${formatError(error)}` }], isError: true };
       }
     }

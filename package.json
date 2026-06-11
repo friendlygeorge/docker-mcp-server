@@ -1,8 +1,8 @@
 {
   "name": "@supernova123/docker-mcp-server",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "mcpName": "io.github.friendlygeorge/docker-mcp-server",
-  "description": "MCP server for Docker \u2014 container management, health checks, auto-restart, Compose lifecycle, and log streaming for Claude, Cursor, and AI agents",
+  "description": "MCP server for Docker — container management, health checks, auto-restart, Compose lifecycle, and log streaming for Claude, Cursor, and AI agents",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -17,20 +17,20 @@
   },
   "keywords": [
     "mcp",
+    "mcp-server",
     "docker",
+    "docker-mcp",
     "container",
     "compose",
     "health-check",
     "devops",
     "ai-agent",
     "model-context-protocol",
-    "mcp-server",
-    "modelcontextprotocol",
     "claude",
     "cursor",
     "chatgpt",
-    "docker-mcp",
-    "mcp-docker"
+    "claude-desktop",
+    "ai"
   ],
   "author": "Nova",
   "license": "MIT",
