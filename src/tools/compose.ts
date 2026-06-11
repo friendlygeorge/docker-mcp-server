@@ -1,4 +1,6 @@
 import { execSync, exec as execCb } from "child_process";
+import { existsSync, statSync } from "fs";
+import { join } from "path";
 import { promisify } from "util";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
@@ -12,9 +14,29 @@ import { formatError } from "../docker.js";
 
 const execAsync = promisify(execCb);
 
+const COMPOSE_FILE_NAMES = ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"];
+
+function resolveComposePath(inputPath: string): string {
+  // If it's already a file that exists, use it directly
+  if (existsSync(inputPath) && statSync(inputPath).isFile()) {
+    return inputPath;
+  }
+  // If it's a directory, look for compose files inside it
+  if (existsSync(inputPath) && statSync(inputPath).isDirectory()) {
+    for (const name of COMPOSE_FILE_NAMES) {
+      const filePath = join(inputPath, name);
+      if (existsSync(filePath)) return filePath;
+    }
+    throw new Error(`No docker-compose.yml found in ${inputPath}. Looked for: ${COMPOSE_FILE_NAMES.join(", ")}`);
+  }
+  // Path doesn't exist — pass it through and let Docker produce the error
+  return inputPath;
+}
+
 function runCompose(path: string, args: string[]): string {
+  const filePath = resolveComposePath(path);
   try {
-    const result = execSync(`docker compose -f ${path} ${args.join(" ")}`, {
+    const result = execSync(`docker compose -f "${filePath}" ${args.join(" ")}`, {
       encoding: "utf-8",
       timeout: 30000,
     });

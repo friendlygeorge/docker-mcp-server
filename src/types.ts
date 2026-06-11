@@ -73,20 +73,20 @@ export const RemoveImageSchema = z.object({
 
 // Docker Compose schemas
 export const ComposeUpSchema = z.object({
-  path: z.string().describe("Path to docker-compose.yml directory"),
+  path: z.string().describe("Path to docker-compose.yml file or its parent directory"),
   build: z.boolean().optional().describe("Build images before starting (default: false)"),
   detach: z.boolean().optional().describe("Run in detached mode (default: true)"),
   services: z.array(z.string()).optional().describe("Specific services to start"),
 });
 
 export const ComposeDownSchema = z.object({
-  path: z.string().describe("Path to docker-compose.yml directory"),
+  path: z.string().describe("Path to docker-compose.yml file or its parent directory"),
   volumes: z.boolean().optional().describe("Remove named volumes (default: false)"),
   timeout: z.number().optional().describe("Shutdown timeout in seconds (default: 10)"),
 });
 
 export const ComposePsSchema = z.object({
-  path: z.string().describe("Path to docker-compose.yml directory"),
+  path: z.string().describe("Path to docker-compose.yml file or its parent directory"),
 });
 
 export const ComposeLogsSchema = z.object({
@@ -97,7 +97,7 @@ export const ComposeLogsSchema = z.object({
 });
 
 export const ComposeRestartSchema = z.object({
-  path: z.string().describe("Path to docker-compose.yml directory"),
+  path: z.string().describe("Path to docker-compose.yml file or its parent directory"),
   services: z.array(z.string()).optional().describe("Specific services to restart (empty = all)"),
   timeout: z.number().optional().describe("Shutdown timeout in seconds (default: 10)"),
 });
