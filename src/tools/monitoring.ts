@@ -1,0 +1,369 @@
+import Dockerode from "dockerode";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+  ContainerHealthStatusSchema,
+  ContainerResourceUsageSchema,
+  WatchEventsSchema,
+  SearchLogsSchema,
+  ResourceAlertCheckSchema,
+  MonitorDashboardSchema,
+} from "../types.js";
+
+export function registerMonitoringTools(server: McpServer, docker: Dockerode): void {
+  // 1. fleet_status — health status of all running containers
+  server.tool(
+    "container_health_status",
+    "Check health status, uptime, and restart count for all running Docker containers. Returns JSON with container name, state, health probe status, and restart count.",
+    ContainerHealthStatusSchema.shape,
+    async (params) => {
+      try {
+        const containers = await docker.listContainers({ all: false });
+        const results = await Promise.all(
+          containers.map(async (c) => {
+            const info = await docker.getContainer(c.Id).inspect();
+            return {
+              name: c.Names[0]?.replace(/^\//, "") || c.Id.slice(0, 12),
+              id: c.Id.slice(0, 12),
+              state: c.State,
+              status: c.Status,
+              health: info.State.Health?.Status || "no-healthcheck",
+              uptime: info.State.StartedAt,
+              restartCount: info.RestartCount,
+              image: c.Image,
+            };
+          })
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+        };
+      } catch (err: any) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // 2. fleet_stats — resource usage for all running containers
+  server.tool(
+    "container_resource_usage",
+    "Monitor CPU, memory, and network I/O across all running Docker containers. Returns sorted resource usage metrics with percentage breakdowns.",
+    ContainerResourceUsageSchema.shape,
+    async (params) => {
+      try {
+        const containers = await docker.listContainers({ all: false });
+        const results = await Promise.all(
+          containers.map(async (c) => {
+            const stats = await docker.getContainer(c.Id).stats({ stream: false });
+            const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - (stats.precpu_stats?.cpu_usage?.total_usage ?? 0);
+            const systemDelta = stats.cpu_stats.system_cpu_usage - (stats.precpu_stats?.system_cpu_usage ?? 0);
+            const cpuCount = stats.cpu_stats.online_cpus ?? 1;
+            const cpuPercent = systemDelta > 0 ? (cpuDelta / systemDelta) * cpuCount * 100 : 0;
+            const memUsage = stats.memory_stats?.usage ?? 0;
+            const memLimit = stats.memory_stats?.limit ?? 1;
+            const memPercent = (memUsage / memLimit) * 100;
+            const netRx = Object.values(stats.networks ?? {}).reduce((sum: number, n: any) => sum + (n.rx_bytes ?? 0), 0);
+            const netTx = Object.values(stats.networks ?? {}).reduce((sum: number, n: any) => sum + (n.tx_bytes ?? 0), 0);
+
+            return {
+              name: c.Names[0]?.replace(/^\//, "") || c.Id.slice(0, 12),
+              id: c.Id.slice(0, 12),
+              cpu_percent: Math.round(cpuPercent * 100) / 100,
+              memory_usage_mb: Math.round((memUsage / 1024 / 1024) * 100) / 100,
+              memory_percent: Math.round(memPercent * 100) / 100,
+              network_rx_mb: Math.round((netRx / 1024 / 1024) * 100) / 100,
+              network_tx_mb: Math.round((netTx / 1024 / 1024) * 100) / 100,
+            };
+          })
+        );
+
+        const sortBy = params.sort_by || "cpu";
+        results.sort((a: any, b: any) => {
+          if (sortBy === "cpu") return b.cpu_percent - a.cpu_percent;
+          if (sortBy === "memory") return b.memory_percent - a.memory_percent;
+          return (b.network_rx_mb + b.network_tx_mb) - (a.network_rx_mb + a.network_tx_mb);
+        });
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+        };
+      } catch (err: any) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // 3. watch_events — stream Docker events (simplified: collect events for a duration)
+  server.tool(
+    "watch_events",
+    "Stream Docker container events (start, stop, die, restart, health_status) over a configurable time window. Filter by specific container or event type.",
+    WatchEventsSchema.shape,
+    async (params) => {
+      try {
+        const durationMs = (params.duration || 30) * 1000;
+        const filter: any = {};
+        if (params.container) filter.container = [params.container];
+        if (params.event_type && params.event_type !== "all") filter.event = [params.event_type];
+        if (params.since) filter.since = [params.since];
+
+        const events: any[] = [];
+        const stream = await docker.getEvents(filter as Dockerode.GetEventsOptions) as unknown as NodeJS.ReadableStream;
+
+        await new Promise<void>((resolve) => {
+          const timeout = setTimeout(() => {
+            resolve();
+          }, durationMs);
+
+          stream.on("data", (chunk: Buffer) => {
+            try {
+              const event = JSON.parse(chunk.toString());
+              events.push({
+                type: event.Type,
+                action: event.Action,
+                container: event.Actor?.Attributes?.name || event.Actor?.ID?.slice(0, 12),
+                time: new Date(event.time * 1000).toISOString(),
+              });
+            } catch {}
+          });
+
+          stream.on("error", () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+
+          stream.on("end", () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+        });
+
+        return {
+          content: [{ type: "text", text: events.length ? JSON.stringify(events, null, 2) : "No events captured in the time window." }],
+        };
+      } catch (err: any) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // 4. search_logs — search logs across multiple containers
+  server.tool(
+    "search_logs",
+    "Search Docker container logs across multiple containers using regex pattern matching. Returns matching log lines with container name and timestamp.",
+    SearchLogsSchema.shape,
+    async (params) => {
+      try {
+        const targetContainers = params.containers || [];
+        let containers: { id: string; name: string }[];
+
+        if (targetContainers.length > 0) {
+          containers = await Promise.all(
+            targetContainers.map(async (id) => {
+              const info = await docker.getContainer(id).inspect();
+              return { id, name: info.Name.replace(/^\//, "") };
+            })
+          );
+        } else {
+          const list = await docker.listContainers({ all: false });
+          containers = list.map((c) => ({ id: c.Id, name: c.Names[0]?.replace(/^\//, "") || c.Id.slice(0, 12) }));
+        }
+
+        const regex = new RegExp(params.pattern, params.ignore_case ? "i" : "");
+        const matches: any[] = [];
+
+        for (const container of containers) {
+          try {
+            const logStream = await docker.getContainer(container.id).logs({
+              stdout: true,
+              stderr: true,
+              tail: params.tail || 500,
+              since: params.since ? Math.floor(new Date(params.since).getTime() / 1000) : undefined,
+            });
+            const output = logStream.toString("utf-8").replace(/^[\x00-\x0f]{8}/gm, "");
+            const lines = output.split("\n");
+            for (const line of lines) {
+              if (regex.test(line)) {
+                matches.push({ container: container.name, line: line.trim() });
+              }
+            }
+          } catch {}
+        }
+
+        return {
+          content: [{ type: "text", text: matches.length ? JSON.stringify(matches, null, 2) : "No matches found." }],
+        };
+      } catch (err: any) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // 5. check_thresholds — check all containers against thresholds
+  server.tool(
+    "resource_alert_check",
+    "Alert when Docker containers exceed resource thresholds (CPU%, memory%, restart count). Returns violations with specific metrics that triggered alerts.",
+    ResourceAlertCheckSchema.shape,
+    async (params) => {
+      try {
+        const cpuThreshold = params.cpu_percent ?? 80;
+        const memThreshold = params.memory_percent ?? 80;
+        const restartThreshold = params.restart_count ?? 5;
+        const containers = await docker.listContainers({ all: false });
+        const violations: any[] = [];
+
+        for (const c of containers) {
+          const info = await docker.getContainer(c.Id).inspect();
+          const issues: string[] = [];
+
+          // Check restart count
+          if (info.RestartCount > restartThreshold) {
+            issues.push(`restarts: ${info.RestartCount} > ${restartThreshold}`);
+          }
+
+          // Check CPU and memory
+          try {
+            const stats = await docker.getContainer(c.Id).stats({ stream: false });
+            const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - (stats.precpu_stats?.cpu_usage?.total_usage ?? 0);
+            const systemDelta = stats.cpu_stats.system_cpu_usage - (stats.precpu_stats?.system_cpu_usage ?? 0);
+            const cpuCount = stats.cpu_stats.online_cpus ?? 1;
+            const cpuPercent = systemDelta > 0 ? (cpuDelta / systemDelta) * cpuCount * 100 : 0;
+            const memUsage = stats.memory_stats?.usage ?? 0;
+            const memLimit = stats.memory_stats?.limit ?? 1;
+            const memPercent = (memUsage / memLimit) * 100;
+
+            if (cpuPercent > cpuThreshold) issues.push(`cpu: ${Math.round(cpuPercent)}% > ${cpuThreshold}%`);
+            if (memPercent > memThreshold) issues.push(`memory: ${Math.round(memPercent)}% > ${memThreshold}%`);
+          } catch {}
+
+          if (issues.length > 0) {
+            violations.push({
+              container: c.Names[0]?.replace(/^\//, "") || c.Id.slice(0, 12),
+              id: c.Id.slice(0, 12),
+              issues,
+            });
+          }
+        }
+
+        return {
+          content: [{
+            type: "text",
+            text: violations.length
+              ? JSON.stringify({ violations, checked: containers.length }, null, 2)
+              : JSON.stringify({ message: "All containers within thresholds.", checked: containers.length }),
+          }],
+        };
+      } catch (err: any) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // 6. monitor_dashboard — single-call fleet summary
+  server.tool(
+    "monitor_dashboard",
+    "Comprehensive Docker fleet dashboard in a single API call. Returns health status, top resource consumers, recent events, and threshold violations.",
+    MonitorDashboardSchema.shape,
+    async (params) => {
+      try {
+        const containers = await docker.listContainers({ all: false });
+
+        // Fleet health
+        const health = await Promise.all(
+          containers.map(async (c) => {
+            const info = await docker.getContainer(c.Id).inspect();
+            return {
+              name: c.Names[0]?.replace(/^\//, "") || c.Id.slice(0, 12),
+              state: c.State,
+              health: info.State.Health?.Status || "no-healthcheck",
+              restartCount: info.RestartCount,
+            };
+          })
+        );
+
+        // Resource usage (top 5 by CPU)
+        const stats = await Promise.all(
+          containers.map(async (c) => {
+            try {
+              const s = await docker.getContainer(c.Id).stats({ stream: false });
+              const cpuDelta = s.cpu_stats.cpu_usage.total_usage - (s.precpu_stats?.cpu_usage?.total_usage ?? 0);
+              const systemDelta = s.cpu_stats.system_cpu_usage - (s.precpu_stats?.system_cpu_usage ?? 0);
+              const cpuCount = s.cpu_stats.online_cpus ?? 1;
+              const cpuPercent = systemDelta > 0 ? (cpuDelta / systemDelta) * cpuCount * 100 : 0;
+              const memUsage = s.memory_stats?.usage ?? 0;
+              const memLimit = s.memory_stats?.limit ?? 1;
+              const memPercent = (memUsage / memLimit) * 100;
+              return {
+                name: c.Names[0]?.replace(/^\//, "") || c.Id.slice(0, 12),
+                cpu_percent: Math.round(cpuPercent * 100) / 100,
+                memory_percent: Math.round(memPercent * 100) / 100,
+              };
+            } catch {
+              return null;
+            }
+          })
+        );
+
+        const topConsumers = stats.filter(Boolean).sort((a: any, b: any) => b.cpu_percent - a.cpu_percent).slice(0, 5);
+
+        // Recent events (last 5 minutes) - use simple approach
+        const recentEvents: any[] = [];
+        try {
+          const sinceTs = Math.floor((Date.now() - 5 * 60 * 1000) / 1000);
+          const eventStream = await docker.getEvents({ since: sinceTs }) as unknown as NodeJS.ReadableStream;
+          await new Promise<void>((resolve) => {
+            const timeout = setTimeout(() => { resolve(); }, 2000);
+            eventStream.on("data", (chunk: Buffer) => {
+              try {
+                const e = JSON.parse(chunk.toString());
+                recentEvents.push({
+                  action: e.Action,
+                  container: e.Actor?.Attributes?.name || e.Actor?.ID?.slice(0, 12),
+                  time: new Date(e.time * 1000).toISOString(),
+                });
+              } catch {}
+            });
+            eventStream.on("error", () => { clearTimeout(timeout); resolve(); });
+            eventStream.on("end", () => { clearTimeout(timeout); resolve(); });
+          });
+        } catch {}
+
+        // Threshold violations
+        const violations = stats.filter(Boolean).filter((s: any) => s.cpu_percent > 80 || s.memory_percent > 80);
+
+        const dashboard = {
+          summary: {
+            total_containers: containers.length,
+            running: containers.filter((c) => c.State === "running").length,
+            unhealthy: health.filter((h) => h.health === "unhealthy").length,
+          },
+          health,
+          top_cpu_consumers: topConsumers,
+          recent_events: recentEvents.slice(0, 10),
+          threshold_violations: violations,
+        };
+
+        return {
+          content: [{ type: "text", text: JSON.stringify(dashboard, null, 2) }],
+        };
+      } catch (err: any) {
+        return {
+          content: [{ type: "text", text: `Error: ${err.message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+}

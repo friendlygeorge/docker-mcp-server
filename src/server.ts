@@ -7,11 +7,12 @@ import { registerHealthTools } from "./tools/health.js";
 import { registerLogsTools } from "./tools/logs.js";
 import { registerExecTools } from "./tools/exec.js";
 import { registerNetworkTools } from "./tools/network.js";
+import { registerMonitoringTools } from "./tools/monitoring.js";
 
 export function createServer(docker: Dockerode): McpServer {
   const server = new McpServer({
     name: "docker-mcp-server",
-    version: "0.1.0",
+    version: "0.2.0",
   });
 
   // Register all tool categories
@@ -22,6 +23,7 @@ export function createServer(docker: Dockerode): McpServer {
   registerLogsTools(server, docker);
   registerExecTools(server, docker);
   registerNetworkTools(server, docker);
+  registerMonitoringTools(server, docker);
 
   return server;
 }

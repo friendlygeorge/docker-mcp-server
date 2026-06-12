@@ -150,3 +150,34 @@ export const ListNetworksSchema = z.object({
 export const ListVolumesSchema = z.object({
   filter: z.string().optional().describe("Filter by name or driver"),
 });
+
+
+// Monitoring schemas (v0.2.0)
+export const ContainerHealthStatusSchema = z.object({});
+
+export const ContainerResourceUsageSchema = z.object({
+  sort_by: z.enum(["cpu", "memory", "network"]).optional().describe("Sort results by metric (default: cpu)"),
+});
+
+export const WatchEventsSchema = z.object({
+  container: z.string().optional().describe("Filter by container name or ID"),
+  event_type: z.enum(["start", "stop", "die", "restart", "health_status", "oom", "all"]).optional().describe("Filter by event type (default: all)"),
+  since: z.string().optional().describe("Show events since timestamp (e.g., '2026-01-01T00:00:00Z')"),
+  duration: z.number().optional().describe("Max seconds to listen (default: 30)"),
+});
+
+export const SearchLogsSchema = z.object({
+  pattern: z.string().describe("Regex or grep pattern to search for"),
+  containers: z.array(z.string()).optional().describe("Specific containers to search (default: all running)"),
+  tail: z.number().optional().describe("Max lines to scan per container (default: 500)"),
+  since: z.string().optional().describe("Only search logs since timestamp"),
+  ignore_case: z.boolean().optional().describe("Case-insensitive search (default: false)"),
+});
+
+export const ResourceAlertCheckSchema = z.object({
+  cpu_percent: z.number().optional().describe("Alert if CPU usage exceeds this % (default: 80)"),
+  memory_percent: z.number().optional().describe("Alert if memory usage exceeds this % (default: 80)"),
+  restart_count: z.number().optional().describe("Alert if restart count exceeds this (default: 5)"),
+});
+
+export const MonitorDashboardSchema = z.object({});
