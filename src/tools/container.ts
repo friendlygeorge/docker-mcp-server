@@ -156,7 +156,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
 
   server.tool(
     "run_container",
-    "Create and start a new Docker container with one command. Supports image, env, ports, volumes, restart policy, and command override.",
+    "Create and start a new Docker container with one command. Supports image, env, ports, volumes, restart policy, and command override. Auto-pulls missing images.",
     RunContainerSchema.shape,
     async (params) => {
       try {
@@ -184,7 +184,25 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
           },
         };
 
-        const container = await docker.createContainer(createOpts);
+        let container;
+        try {
+          container = await docker.createContainer(createOpts);
+        } catch (createError: any) {
+          // Auto-pull if image not found (HTTP 404)
+          if (createError?.statusCode === 404 && /no such image|No such image/i.test(createError.message || "")) {
+            const stream = await docker.pull(params.image);
+            await new Promise<void>((resolve, reject) => {
+              docker.modem.followProgress(stream, (err: Error | null) => {
+                if (err) reject(err);
+                else resolve();
+              });
+            });
+            container = await docker.createContainer(createOpts);
+          } else {
+            throw createError;
+          }
+        }
+
         await container.start();
         return {
           content: [{ type: "text", text: `Container created and started. ID: ${container.id.substring(0, 12)}` }],
