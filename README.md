@@ -24,6 +24,7 @@ There are 11+ Docker MCP servers on npm. Most are stale, GPL-licensed, or only c
 | **Auto-restart** | ✅ set_restart_policy | ❌ | ❌ |
 | **Compose lifecycle** | ✅ up/down/ps/logs/restart | ❌ | ❌ |
 | **Log streaming** | ✅ tail + timestamp filter | Basic | Basic |
+| **Fleet monitoring** | ✅ 6 fleet tools (status, stats, events, logs, thresholds, dashboard) | ❌ | ❌ |
 | **Agent positioning** | ✅ Built for agents | Generic Docker | Registry API |
 
 ## Use Cases
@@ -95,6 +96,16 @@ claude mcp add docker -- npx -y @supernova123/docker-mcp-server
 | `compose_ps` | List service states |
 | `compose_logs` | Tail Compose service logs |
 | `compose_restart` | Restart Compose services |
+
+### Fleet Monitoring
+| Tool | Description |
+|------|-------------|
+| `fleet_status` | Health status of all running containers (state, health, uptime, restart count) |
+| `fleet_stats` | Resource usage (CPU%, memory%, network I/O) for all running containers |
+| `watch_events` | Collect Docker events (start, stop, die, restart, health) over a time window |
+| `search_logs` | Search logs across multiple containers with regex/grep pattern |
+| `check_thresholds` | Check containers against CPU/memory/restart thresholds, return violations |
+| `monitor_dashboard` | Single-call fleet summary: health, top consumers, recent events, violations |
 
 ### Health & Self-Healing
 | Tool | Description |
