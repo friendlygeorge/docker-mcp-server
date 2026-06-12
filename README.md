@@ -26,6 +26,16 @@ There are 11+ Docker MCP servers on npm. Most are stale, GPL-licensed, or only c
 | **Log streaming** | ✅ tail + timestamp filter | Basic | Basic |
 | **Agent positioning** | ✅ Built for agents | Generic Docker | Registry API |
 
+## Use Cases
+
+**Agent-managed deployments:** Your agent deploys a new version, checks health, waits for readiness, then switches traffic. If the health check fails, it auto-rolls back.
+
+**Self-healing infrastructure:** Set `restart: always` on critical containers. Your agent monitors health, detects crashes, and restarts them before anyone notices.
+
+**Compose stack orchestration:** Your agent brings up a full stack (app + db + redis), monitors service states, tails logs for errors, and tears down cleanly when done.
+
+**Debugging sessions:** Your agent execs into a container, runs diagnostics, streams logs with timestamp filters, and captures stats — all without SSH.
+
 ## Quick Start
 
 One command to run:
