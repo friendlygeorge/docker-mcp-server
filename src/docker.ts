@@ -17,7 +17,89 @@ export function createDockerClient(options?: DockerClientOptions): Dockerode {
   return new Dockerode({ socketPath: "/var/run/docker.sock" });
 }
 
+/**
+ * Structured error types for programmatic error classification.
+ * Helps AI clients decide whether to retry (retryable) or report (permanent).
+ */
+export class DockerConnectionError extends Error {
+  retryable = false;
+  constructor(message: string) {
+    super(message);
+    this.name = "DockerConnectionError";
+  }
+}
+
+export class DockerTimeoutError extends Error {
+  retryable = true;
+  constructor(message: string) {
+    super(message);
+    this.name = "DockerTimeoutError";
+  }
+}
+
+export class DockerPermissionError extends Error {
+  retryable = false;
+  constructor(message: string) {
+    super(message);
+    this.name = "DockerPermissionError";
+  }
+}
+
+/**
+ * Check Docker daemon connectivity at startup.
+ * Returns a structured error if Docker is unreachable.
+ */
+export async function checkDockerConnection(
+  docker: Dockerode
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await docker.ping();
+    return { ok: true };
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes("EACCES") || msg.includes("Permission denied")) {
+      return {
+        ok: false,
+        error: `DockerConnectionError: Cannot access Docker socket — ${msg}. Fix: add user to docker group (sudo usermod -aG docker $USER) or run as root.`,
+      };
+    }
+    if (msg.includes("ENOENT") || msg.includes("no such file")) {
+      return {
+        ok: false,
+        error: `DockerConnectionError: Docker socket not found at /var/run/docker.sock — ${msg}. Fix: install Docker (https://docs.docker.com/engine/install/) and ensure the daemon is running.`,
+      };
+    }
+    return {
+      ok: false,
+      error: `DockerConnectionError: Cannot connect to Docker daemon — ${msg}. Fix: ensure Docker is running (systemctl status docker).`,
+    };
+  }
+}
+
+/**
+ * Run a Docker API call with a configurable timeout.
+ * Returns structured error on timeout instead of hanging indefinitely.
+ */
+export async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new DockerTimeoutError(`Docker API call "${label}" timed out after ${ms}ms`)),
+        ms
+      )
+    ),
+  ]);
+}
+
 export function formatError(error: unknown): string {
+  if (error instanceof DockerConnectionError) return `${error.name}: ${error.message}`;
+  if (error instanceof DockerTimeoutError) return `${error.name}: ${error.message}`;
+  if (error instanceof DockerPermissionError) return `${error.name}: ${error.message}`;
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
   return String(error);

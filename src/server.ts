@@ -10,10 +10,14 @@ import { registerNetworkTools } from "./tools/network.js";
 import { registerVolumeTools } from "./tools/volume.js";
 import { registerMonitoringTools } from "./tools/monitoring.js";
 
-export function createServer(docker: Dockerode): McpServer {
+export interface ServerOptions {
+  timeoutMs?: number;
+}
+
+export function createServer(docker: Dockerode, options?: ServerOptions): McpServer {
   const server = new McpServer({
     name: "docker-mcp-server",
-    version: "0.3.0",
+    version: "0.3.1",
   });
 
   // Register all tool categories
