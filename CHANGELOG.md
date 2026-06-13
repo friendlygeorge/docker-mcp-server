@@ -1,0 +1,98 @@
+# Changelog
+
+All notable changes to @supernova123/docker-mcp-server will be documented in this file.
+
+## [0.3.2] - 2026-06-13
+
+### Added
+- Retry with exponential backoff for transient Docker API errors (`withRetry` wrapper)
+- `isRetryableError` classifier for Docker API error codes
+- 10 new retry/backoff unit tests
+
+### Fixed
+- Transient Docker API errors (ECONNRESET, ETIMEDOUT) now retry automatically
+
+## [0.3.1] - 2026-06-13
+
+### Added
+- Startup health check (`checkDockerConnection`) — validates Docker daemon before server start
+- Configurable timeout wrapper (`withTimeout`) — prevents indefinite hangs on slow API calls (default 30s)
+- Structured error classes: `DockerConnectionError`, `DockerTimeoutError`, `DockerPermissionError`
+- Enhanced `formatError()` recognizing structured error types
+
+### Fixed
+- Unicode regex in `sanitizeOutput` corrupting log output (#6287)
+
+## [0.3.0] - 2026-06-13
+
+### Added
+- Volume management tools: `list_volumes`, `create_volume`, `remove_volume`, `inspect_volume`, `prune_volumes`
+- 4 new volume tools bringing total to 31
+
+## [0.2.5] - 2026-06-12
+
+### Added
+- SECURITY.md with 6 audit findings and mitigations
+- Input validation on all tool parameters
+- Output sanitization to prevent prompt injection
+- Size caps on container lists and log output
+- Timeout caps on API calls
+
+## [0.2.4] - 2026-06-12
+
+### Added
+- MCP annotations on all 31 tools (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`)
+- Rewrote 6 monitoring tool descriptions for TDQS optimization
+- Rewrote 3 C-grade tool descriptions (`compose_logs`, `restart_container`, `stream_logs`)
+
+## [0.2.3] - 2026-06-12
+
+### Fixed
+- TDQS optimization — tool description quality improvements
+
+## [0.2.2] - 2026-06-12
+
+### Added
+- Glama badges to README
+
+## [0.2.1] - 2026-06-12
+
+### Changed
+- Renamed monitoring tools for better Glama Quality score
+
+## [0.2.0] - 2026-06-12
+
+### Added
+- Fleet monitoring tools: `fleet_status`, `fleet_stats`, `monitor_dashboard`, `watch_events`, `resource_alert_check`, `search_logs`
+- 6 monitoring tools with real Docker API calls
+- 21 unit tests for monitoring functionality
+- Fleet Monitoring section in README
+
+## [0.1.6] - 2026-06-11
+
+### Added
+- Auto-pull missing images in `run_container`
+- Dockerfile for Docker Hub MCP org submission
+
+### Fixed
+- Handle 304 error when stopping already-stopped containers
+
+## [0.1.4] - 2026-06-11
+
+### Fixed
+- Resolve compose path — accept both file and directory paths
+
+## [0.1.2] - 2026-06-11
+
+### Changed
+- Optimized npm SEO keywords and descriptions for discoverability
+
+### Added
+- 20 unit tests
+- Competitive comparison and before/after framing in README
+- Use Cases section with concrete agent scenarios
+
+## [0.1.0] - 2026-06-10
+
+### Added
+- Initial release: 25 tools across container, compose, exec, health, logs, image, and network modules
