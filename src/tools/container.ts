@@ -17,6 +17,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
     "list_containers",
     "List Docker containers with optional filters (state, label, name). Returns container IDs, names, images, states, ports, and labels.",
     ListContainersSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const containers = await docker.listContainers({
@@ -39,6 +40,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
     "inspect_container",
     "Get detailed configuration and state of a Docker container by ID or name.",
     InspectContainerSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);
@@ -54,6 +56,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
     "start_container",
     "Start a stopped Docker container by ID or name.",
     StartContainerSchema.shape,
+    { idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);
@@ -69,6 +72,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
     "stop_container",
     "Stop a running Docker container by ID or name with optional timeout.",
     StopContainerSchema.shape,
+    { destructiveHint: true, openWorldHint: false },
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);
@@ -104,6 +108,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
     "remove_container",
     "Remove a Docker container by ID or name. Use force to remove running containers.",
     RemoveContainerSchema.shape,
+    { destructiveHint: true, openWorldHint: false },
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);
@@ -119,6 +124,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
     "recreate_container",
     "Recreate a container with the same configuration (stop, remove, re-create). Useful for applying config changes.",
     RecreateContainerSchema.shape,
+    { destructiveHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);
@@ -159,6 +165,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
     "run_container",
     "Create and start a new Docker container with one command. Supports image, env, ports, volumes, restart policy, and command override. Auto-pulls missing images.",
     RunContainerSchema.shape,
+    { openWorldHint: false },
     async (params) => {
       try {
         const createOpts: Dockerode.ContainerCreateOptions = {

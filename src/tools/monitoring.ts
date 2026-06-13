@@ -13,8 +13,9 @@ export function registerMonitoringTools(server: McpServer, docker: Dockerode): v
   // 1. fleet_status — health status of all running containers
   server.tool(
     "container_health_status",
-    "Check health status, uptime, and restart count for all running Docker containers. Returns JSON with container name, state, health probe status, and restart count.",
+    "Check health status, uptime, and restart count for all running Docker containers. Returns JSON with container name, state, health probe status (healthy/unhealthy/no-healthcheck), and restart count. Use this for a quick fleet health overview; for resource metrics use container_resource_usage instead. Returns an array of objects with name, id, state, status, health, uptime, restartCount, and image fields. Read-only and safe to call repeatedly.",
     ContainerHealthStatusSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const containers = await docker.listContainers({ all: false });
@@ -48,8 +49,9 @@ export function registerMonitoringTools(server: McpServer, docker: Dockerode): v
   // 2. fleet_stats — resource usage for all running containers
   server.tool(
     "container_resource_usage",
-    "Monitor CPU, memory, and network I/O across all running Docker containers. Returns sorted resource usage metrics with percentage breakdowns.",
+    "Monitor CPU, memory, and network I/O across all running Docker containers. Returns sorted resource usage metrics with percentage breakdowns for each container. Use container_health_status for health probes; use resource_alert_check for threshold violations. Supports sort by cpu, memory, or network. Returns array of objects with name, id, cpu_percent, memory_usage_mb, memory_percent, network_rx_mb, network_tx_mb. Read-only and safe to call repeatedly.",
     ContainerResourceUsageSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const containers = await docker.listContainers({ all: false });
@@ -100,8 +102,9 @@ export function registerMonitoringTools(server: McpServer, docker: Dockerode): v
   // 3. watch_events — stream Docker events (simplified: collect events for a duration)
   server.tool(
     "watch_events",
-    "Stream Docker container events (start, stop, die, restart, health_status) over a configurable time window. Filter by specific container or event type.",
+    "Stream Docker container events (start, stop, die, restart, health_status) over a configurable time window. Filter by specific container or event type. Use container_health_status for current state; use this tool to watch for changes over time. Returns array of event objects with type, action, container, and time fields. Returns 'No events captured in the time window.' when no events occur. Read-only and safe to call repeatedly.",
     WatchEventsSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const durationMs = (params.duration || 30) * 1000;
@@ -156,8 +159,9 @@ export function registerMonitoringTools(server: McpServer, docker: Dockerode): v
   // 4. search_logs — search logs across multiple containers
   server.tool(
     "search_logs",
-    "Search Docker container logs across multiple containers using regex pattern matching. Returns matching log lines with container name and timestamp.",
+    "Search Docker container logs across multiple containers using regex pattern matching. Use stream_logs for single-container log tailing; use this tool to search across multiple containers at once. Returns matching log lines with container name and line content. The pattern parameter accepts any valid regex; set ignore_case for case-insensitive matching. Returns 'No matches found.' when no lines match. Read-only and safe to call repeatedly.",
     SearchLogsSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const targetContainers = params.containers || [];
@@ -211,8 +215,9 @@ export function registerMonitoringTools(server: McpServer, docker: Dockerode): v
   // 5. check_thresholds — check all containers against thresholds
   server.tool(
     "resource_alert_check",
-    "Alert when Docker containers exceed resource thresholds (CPU%, memory%, restart count). Returns violations with specific metrics that triggered alerts.",
+    "Check all running Docker containers against configurable CPU%, memory%, and restart count thresholds. Returns containers that violate thresholds with specific metrics that triggered alerts. Use container_resource_usage for raw metrics; use this tool for automated alerting. Default thresholds: 80% CPU, 80% memory, 5 restarts. Returns { violations: [...], checked: N } or { message: 'All containers within thresholds.', checked: N }. Read-only and safe to call repeatedly.",
     ResourceAlertCheckSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const cpuThreshold = params.cpu_percent ?? 80;
@@ -274,8 +279,9 @@ export function registerMonitoringTools(server: McpServer, docker: Dockerode): v
   // 6. monitor_dashboard — single-call fleet summary
   server.tool(
     "monitor_dashboard",
-    "Comprehensive Docker fleet dashboard in a single API call. Returns health status, top resource consumers, recent events, and threshold violations.",
+    "Comprehensive Docker fleet dashboard in a single API call. Aggregates health status of all containers, top 5 CPU consumers, recent events (last 5 minutes), and threshold violations into one response. Use individual tools (container_health_status, container_resource_usage, watch_events) for targeted queries; use this for a complete fleet overview. Returns object with summary (total, running, healthy, unhealthy), top_consumers, recent_events, and violations. Read-only and safe to call repeatedly.",
     MonitorDashboardSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const containers = await docker.listContainers({ all: false });

@@ -8,6 +8,7 @@ export function registerHealthTools(server: McpServer, docker: Dockerode): void 
     "check_health",
     "Run a health probe against a container. Supports HTTP, TCP, and exec probes. Auto-detects from container HEALTHCHECK if available.",
     CheckHealthSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);
@@ -77,6 +78,7 @@ export function registerHealthTools(server: McpServer, docker: Dockerode): void 
     "watch_health",
     "Poll a container's health status until it becomes healthy or times out. Useful for waiting on service startup.",
     WatchHealthSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);
@@ -130,6 +132,7 @@ export function registerHealthTools(server: McpServer, docker: Dockerode): void 
     "set_restart_policy",
     "Change the restart policy of a running container without recreating it.",
     SetRestartPolicySchema.shape,
+    { idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);

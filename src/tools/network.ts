@@ -8,6 +8,7 @@ export function registerNetworkTools(server: McpServer, docker: Dockerode): void
     "list_networks",
     "List Docker networks with optional filter. Returns network IDs, names, drivers, and scopes.",
     ListNetworksSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const networks = await docker.listNetworks({
@@ -39,6 +40,7 @@ export function registerNetworkTools(server: McpServer, docker: Dockerode): void
     "list_volumes",
     "List Docker volumes with optional filter. Returns volume names, drivers, mount points, and labels.",
     ListVolumesSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const result = await docker.listVolumes({

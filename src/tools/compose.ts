@@ -52,6 +52,7 @@ export function registerComposeTools(server: McpServer): void {
     "compose_up",
     "Bring up Docker Compose services from a docker-compose.yml file. Optionally build images first.",
     ComposeUpSchema.shape,
+    { idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const args = ["up", "-d"];
@@ -69,6 +70,7 @@ export function registerComposeTools(server: McpServer): void {
     "compose_down",
     "Tear down Docker Compose services. Optionally remove named volumes.",
     ComposeDownSchema.shape,
+    { destructiveHint: true, openWorldHint: false },
     async (params) => {
       try {
         const args = ["down"];
@@ -86,6 +88,7 @@ export function registerComposeTools(server: McpServer): void {
     "compose_ps",
     "List service states across a Docker Compose stack.",
     ComposePsSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const output = runCompose(params.path, ["ps", "--format", "json"]);
@@ -122,6 +125,7 @@ export function registerComposeTools(server: McpServer): void {
     "compose_restart",
     "Restart Docker Compose services. Restart specific services or the entire stack.",
     ComposeRestartSchema.shape,
+    { destructiveHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const args = ["restart"];

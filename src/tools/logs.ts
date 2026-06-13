@@ -32,6 +32,7 @@ export function registerLogsTools(server: McpServer, docker: Dockerode): void {
     "container_stats",
     "Get real-time resource usage statistics for a Docker container (CPU, memory, network, I/O).",
     ContainerStatsSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);

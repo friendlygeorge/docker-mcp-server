@@ -13,6 +13,7 @@ export function registerImageTools(server: McpServer, docker: Dockerode): void {
     "list_images",
     "List Docker images with optional filters. Returns image IDs, tags, sizes, and creation dates.",
     ListImagesSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const images = await docker.listImages({
@@ -31,6 +32,7 @@ export function registerImageTools(server: McpServer, docker: Dockerode): void {
     "pull_image",
     "Pull a Docker image from a registry. Returns pull progress events.",
     PullImageSchema.shape,
+    { idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const imageRef = params.tag ? `${params.image}:${params.tag}` : params.image;
@@ -53,6 +55,7 @@ export function registerImageTools(server: McpServer, docker: Dockerode): void {
     "build_image",
     "Build a Docker image from a Dockerfile or build context path.",
     BuildImageSchema.shape,
+    { idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const stream = await docker.buildImage(
@@ -79,6 +82,7 @@ export function registerImageTools(server: McpServer, docker: Dockerode): void {
     "remove_image",
     "Remove a Docker image by name or ID. Use force to remove even if tagged.",
     RemoveImageSchema.shape,
+    { destructiveHint: true, openWorldHint: false },
     async (params) => {
       try {
         const image = docker.getImage(params.image);

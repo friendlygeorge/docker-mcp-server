@@ -8,6 +8,7 @@ export function registerExecTools(server: McpServer, docker: Dockerode): void {
     "exec_in_container",
     "Execute a command inside a running Docker container. Returns stdout, stderr, and exit code.",
     ExecInContainerSchema.shape,
+    { openWorldHint: false },
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);
