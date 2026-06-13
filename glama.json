@@ -1,0 +1,12 @@
+{
+  "$schema": "https://glama.ai/schemas/glama.json",
+  "maintainers": ["friendlygeorge"],
+  "title": "Docker MCP Server",
+  "description": "31 tools for AI agent Docker management — container lifecycle, Compose stack operations, health checks, log streaming, and fleet monitoring through the Model Context Protocol.",
+  "tags": ["docker", "containers", "mcp", "compose", "health-checks", "monitoring", "devops", "ai-agents", "typescript", "self-healing"],
+  "repository": "https://github.com/friendlygeorge/docker-mcp-server",
+  "license": "MIT",
+  "categories": ["virtualization", "developer-tools"],
+  "language": "TypeScript",
+  "runtime": "node"
+}
