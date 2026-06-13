@@ -166,6 +166,26 @@ export const ListVolumesSchema = z.object({
   filter: z.string().optional().describe("Filter by name or driver"),
 });
 
+export const CreateVolumeSchema = z.object({
+  name: z.string().min(1).max(255).describe("Volume name"),
+  driver: z.string().optional().describe("Volume driver (default: 'local')"),
+  labels: z.record(z.string(), z.string()).optional().describe("Labels to apply to the volume"),
+  options: z.record(z.string(), z.string()).optional().describe("Driver-specific options"),
+});
+
+export const InspectVolumeSchema = z.object({
+  name: z.string().min(1).describe("Volume name or ID to inspect"),
+});
+
+export const RemoveVolumeSchema = z.object({
+  name: z.string().min(1).describe("Volume name or ID to remove"),
+  force: z.boolean().optional().describe("Force removal even if in use (default: false)"),
+});
+
+export const PruneVolumesSchema = z.object({
+  filter: z.string().optional().describe("Filter by label (e.g., 'label=key=value')"),
+});
+
 
 // Monitoring schemas (v0.2.0)
 export const ContainerHealthStatusSchema = z.object({});
