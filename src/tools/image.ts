@@ -6,7 +6,7 @@ import {
   BuildImageSchema,
   RemoveImageSchema,
 } from "../types.js";
-import { formatImage, formatError } from "../docker.js";
+import { formatImage, formatError, withRetry } from "../docker.js";
 
 export function registerImageTools(server: McpServer, docker: Dockerode): void {
   server.tool(
@@ -16,10 +16,10 @@ export function registerImageTools(server: McpServer, docker: Dockerode): void {
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
-        const images = await docker.listImages({
+        const images = await withRetry(() => docker.listImages({
           all: params.all ?? false,
           filters: params.filter ? JSON.stringify({ reference: [params.filter] }) : undefined,
-        });
+        }), { label: "list_images" });
         const results = images.map(formatImage);
         return { content: [{ type: "text", text: JSON.stringify(results, null, 2) }] };
       } catch (error) {

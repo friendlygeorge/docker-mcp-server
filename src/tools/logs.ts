@@ -1,7 +1,7 @@
 import Dockerode from "dockerode";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamLogsSchema, ContainerStatsSchema } from "../types.js";
-import { formatError, formatBytes, sanitizeOutput } from "../docker.js";
+import { formatError, sanitizeOutput, withRetry, formatBytes } from "../docker.js";
 
 export function registerLogsTools(server: McpServer, docker: Dockerode): void {
   server.tool(
@@ -12,13 +12,13 @@ export function registerLogsTools(server: McpServer, docker: Dockerode): void {
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);
-        const logs = await container.logs({
+        const logs = await withRetry(() => container.logs({
           stdout: true,
           stderr: true,
           tail: params.tail ?? 100,
           since: params.since ? Math.floor(new Date(params.since).getTime() / 1000) : undefined,
           follow: false as const,
-        });
+        }), { label: "container_logs" });
         // Dockerode returns a Buffer with multiplexed stream headers
         // Use 100KB cap for logs to keep LLM context small
         const output = sanitizeOutput(logs.toString("utf-8"), 100_000);

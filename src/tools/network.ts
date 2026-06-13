@@ -1,7 +1,7 @@
 import Dockerode from "dockerode";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ListNetworksSchema, ListVolumesSchema } from "../types.js";
-import { formatError } from "../docker.js";
+import { formatError, withRetry } from "../docker.js";
 
 export function registerNetworkTools(server: McpServer, docker: Dockerode): void {
   server.tool(
@@ -11,9 +11,9 @@ export function registerNetworkTools(server: McpServer, docker: Dockerode): void
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
-        const networks = await docker.listNetworks({
+        const networks = await withRetry(() => docker.listNetworks({
           filters: params.filter ? JSON.stringify({ name: [params.filter] }) : undefined,
-        });
+        }), { label: "list_networks" });
         const results = networks.map((n) => ({
           id: n.Id.substring(0, 12),
           name: n.Name,

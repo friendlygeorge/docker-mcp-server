@@ -10,7 +10,7 @@ import {
   RecreateContainerSchema,
   RunContainerSchema,
 } from "../types.js";
-import { formatContainer, formatError } from "../docker.js";
+import { formatContainer, formatError, withRetry } from "../docker.js";
 
 export function registerContainerTools(server: McpServer, docker: Dockerode): void {
   server.tool(
@@ -20,14 +20,17 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
-        const containers = await docker.listContainers({
-          all: params.all ?? false,
-          filters: JSON.stringify({
-            ...(params.label ? { label: params.label } : {}),
-            ...(params.name ? { name: [`/${params.name}`] } : {}),
-            ...(params.state ? { status: [params.state] } : {}),
+        const containers = await withRetry(
+          () => docker.listContainers({
+            all: params.all ?? false,
+            filters: JSON.stringify({
+              ...(params.label ? { label: params.label } : {}),
+              ...(params.name ? { name: [`/${params.name}`] } : {}),
+              ...(params.state ? { status: [params.state] } : {}),
+            }),
           }),
-        });
+          { label: "list_containers" }
+        );
         const results = containers.map(formatContainer);
         return { content: [{ type: "text", text: JSON.stringify(results, null, 2) }] };
       } catch (error) {
@@ -60,7 +63,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);
-        await container.start();
+        await withRetry(() => container.start(), { label: "start_container" });
         return { content: [{ type: "text", text: `Container ${params.container_id} started.` }] };
       } catch (error) {
         return { content: [{ type: "text", text: `Error: ${formatError(error)}` }], isError: true };
@@ -76,7 +79,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);
-        await container.stop({ t: params.timeout ?? 10 });
+        await withRetry(() => container.stop({ t: params.timeout ?? 10 }), { label: "stop_container" });
         return { content: [{ type: "text", text: `Container ${params.container_id} stopped.` }] };
       } catch (error: any) {
         // 304 means container is already stopped — treat as success
@@ -96,7 +99,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);
-        await container.restart({ t: params.timeout ?? 10 });
+        await withRetry(() => container.restart({ t: params.timeout ?? 10 }), { label: "restart_container" });
         return { content: [{ type: "text", text: `Container ${params.container_id} restarted.` }] };
       } catch (error) {
         return { content: [{ type: "text", text: `Error: ${formatError(error)}` }], isError: true };

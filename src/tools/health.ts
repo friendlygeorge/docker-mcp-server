@@ -1,7 +1,7 @@
 import Dockerode from "dockerode";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { CheckHealthSchema, WatchHealthSchema, SetRestartPolicySchema } from "../types.js";
-import { formatError } from "../docker.js";
+import { formatError, withRetry } from "../docker.js";
 
 export function registerHealthTools(server: McpServer, docker: Dockerode): void {
   server.tool(

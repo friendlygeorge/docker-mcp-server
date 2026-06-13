@@ -6,7 +6,7 @@ import {
   RemoveVolumeSchema,
   PruneVolumesSchema,
 } from "../types.js";
-import { formatError } from "../docker.js";
+import { formatError, withRetry } from "../docker.js";
 
 export function registerVolumeTools(server: McpServer, docker: Dockerode): void {
   server.tool(
@@ -16,12 +16,12 @@ export function registerVolumeTools(server: McpServer, docker: Dockerode): void 
     { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
-        const result = await docker.createVolume({
+        const result = await withRetry(() => docker.createVolume({
           Name: params.name,
           Driver: params.driver || "local",
           Labels: params.labels,
           DriverOpts: params.options,
-        });
+        }), { label: "create_volume" });
         return {
           content: [{
             type: "text",
