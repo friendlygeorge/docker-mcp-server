@@ -6,8 +6,9 @@ import { formatError, formatBytes } from "../docker.js";
 export function registerLogsTools(server: McpServer, docker: Dockerode): void {
   server.tool(
     "stream_logs",
-    "Get logs from a Docker container. Supports tail count, timestamp filtering, and follow mode.",
+    "Get logs from a single Docker container by ID or name. Use stream_logs for one container; use compose_logs for multi-service Compose stacks. Supports tail count (default 100 lines), since timestamp for filtering, and follow mode. Returns UTF-8 log text with multiplexed stream headers stripped, or 'No logs found.' when the container has no output. Read-only and safe to call repeatedly. Returns an error string if the container does not exist.",
     StreamLogsSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);

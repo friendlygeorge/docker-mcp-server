@@ -32,7 +32,9 @@ import { createDockerClient } from "../src/docker.js";
 function createMockServer() {
   const tools: Record<string, { description: string; handler: Function }> = {};
   return {
-    tool: (name: string, description: string, _schema: unknown, handler: Function) => {
+    tool: (name: string, description: string, _schemaOrAnnotations: unknown, _annotationsOrHandler: unknown, _maybeHandler?: Function) => {
+      // Support both 4-param (name, desc, schema, handler) and 5-param (name, desc, schema, annotations, handler)
+      const handler = typeof _annotationsOrHandler === 'function' ? _annotationsOrHandler : (_maybeHandler as Function);
       tools[name] = { description, handler };
     },
     tools,

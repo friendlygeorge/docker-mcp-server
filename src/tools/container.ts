@@ -86,8 +86,9 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
 
   server.tool(
     "restart_container",
-    "Restart a Docker container by ID or name with optional timeout.",
+    "Restart a Docker container by ID or name with optional timeout. This tears down the running process and starts a new one — use stop_container for a graceful shutdown or remove_container to delete entirely. The timeout parameter (default 10s) controls how long to wait before force-killing. Returns a confirmation string on success. Idempotent: restarting an already-stopped container starts it again. Returns an error string if the container does not exist or is not running.",
     RestartContainerSchema.shape,
+    { destructiveHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const container = docker.getContainer(params.container_id);

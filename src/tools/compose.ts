@@ -102,8 +102,9 @@ export function registerComposeTools(server: McpServer): void {
 
   server.tool(
     "compose_logs",
-    "Tail logs from Docker Compose services. Supports filtering by service and line count.",
+    "Tail logs from one or more services in a Docker Compose stack defined by docker-compose.yml at path. Use this for multi-service log inspection; for single-container logs use stream_logs instead. The services filter limits output to named services; tail controls how many recent lines to return (default 100); follow=true streams new lines until cancelled. Returns UTF-8 log text with stream headers stripped, or 'No logs found.' when the stack has not produced output. Read-only and safe to call repeatedly. Returns an error string if path does not resolve to a Compose project.",
     ComposeLogsSchema.shape,
+    { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
       try {
         const args = ["logs", "--tail", String(params.tail ?? 100)];
