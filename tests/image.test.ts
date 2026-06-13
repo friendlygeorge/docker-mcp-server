@@ -28,7 +28,7 @@ import { createDockerClient } from "../src/docker.js";
 function createMockServer() {
   const tools: Record<string, { description: string; handler: Function }> = {};
   return {
-    tool: (name: string, description: string, _schema: unknown, handler: Function) => {
+    tool: (name: string, description: string, _schema: unknown, _hints: unknown, handler: Function) => {
       tools[name] = { description, handler };
     },
     tools,

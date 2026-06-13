@@ -66,7 +66,7 @@ export function sanitizeOutput(text: string, maxLength = 1_000_000): string {
   text = text.replace(/\x1b\][^\x07]*\x07/g, ""); // OSC terminated by BEL
   text = text.replace(/\x1b[@-Z\\-_]/g, "");       // Single-char escapes
   // Strip invisible Unicode (Tag chars, bidi overrides, zero-width)
-  text = text.replace(/[\uE0001-\uE007F\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, "");
+  text = text.replace(/[\u{E0000}-\u{E007F}\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/gu, "");
   // Strip Docker stream-frame headers (8-byte prefix per frame)
   text = text.replace(/^[\x00-\x0f]{8}/gm, "");
   // Truncate to cap memory and LLM context cost
