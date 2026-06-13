@@ -141,10 +141,20 @@ claude mcp add docker -- npx -y @supernova123/docker-mcp-server
 
 ## Security
 
+This server has **full Docker daemon access** via the Docker socket. It is designed for local development and trusted environments.
+
 - **Read-only by default**: all container and image tools read state; write operations (start/stop/remove) require explicit tool calls
-- **No API keys needed**: connects to local Docker daemon via socket
+- **No API keys needed**: connects to local Docker socket (`/var/run/docker.sock`), not remote API tokens
 - **No network access**: all operations are local Docker API calls
+- **Input validation**: Zod schemas on every tool parameter — command injection, path traversal, and env injection are rejected at the schema level
+- **Output sanitization**: ANSI escape codes, invisible Unicode, and Docker stream headers are stripped from all tool output
+- **Output size caps**: log output capped at 100KB, general output at 1MB, to prevent LLM context overflow
+- **Parameter bounds**: command arrays limited to 50 args, env to 50 vars, log tail to 10K lines, timeouts enforced (600s health, 300s events)
 - **MIT License**: fully auditable
+
+**Threat model**: any tool that calls Docker through this server can start any container with any flags, including privileged. The threat model is the same as giving a user shell access to the Docker socket. Do not expose this server to untrusted users.
+
+For vulnerability reports, see [SECURITY.md](SECURITY.md).
 
 ## License
 

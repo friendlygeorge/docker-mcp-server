@@ -1,7 +1,7 @@
 import Dockerode from "dockerode";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamLogsSchema, ContainerStatsSchema } from "../types.js";
-import { formatError, formatBytes } from "../docker.js";
+import { formatError, formatBytes, sanitizeOutput } from "../docker.js";
 
 export function registerLogsTools(server: McpServer, docker: Dockerode): void {
   server.tool(
@@ -20,7 +20,8 @@ export function registerLogsTools(server: McpServer, docker: Dockerode): void {
           follow: false as const,
         });
         // Dockerode returns a Buffer with multiplexed stream headers
-        const output = logs.toString("utf-8").replace(/^[\x00-\x0f]{8}/gm, "");
+        // Use 100KB cap for logs to keep LLM context small
+        const output = sanitizeOutput(logs.toString("utf-8"), 100_000);
         return { content: [{ type: "text", text: output || "No logs found." }] };
       } catch (error) {
         return { content: [{ type: "text", text: `Error: ${formatError(error)}` }], isError: true };

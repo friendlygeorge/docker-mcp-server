@@ -56,6 +56,26 @@ export function formatImage(image: Dockerode.ImageInfo): Record<string, unknown>
   };
 }
 
+/**
+ * Sanitize tool output: strip ANSI escapes, invisible Unicode, and truncate.
+ * Prevents prompt injection via output and caps LLM context cost.
+ */
+export function sanitizeOutput(text: string, maxLength = 1_000_000): string {
+  // Strip ANSI escape codes (CSI, OSC, simple sequences)
+  text = text.replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, "");
+  text = text.replace(/\x1b\][^\x07]*\x07/g, ""); // OSC terminated by BEL
+  text = text.replace(/\x1b[@-Z\\-_]/g, "");       // Single-char escapes
+  // Strip invisible Unicode (Tag chars, bidi overrides, zero-width)
+  text = text.replace(/[\uE0001-\uE007F\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, "");
+  // Strip Docker stream-frame headers (8-byte prefix per frame)
+  text = text.replace(/^[\x00-\x0f]{8}/gm, "");
+  // Truncate to cap memory and LLM context cost
+  if (text.length > maxLength) {
+    return text.slice(0, maxLength) + `\n... [output truncated at ${maxLength} chars]`;
+  }
+  return text;
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;

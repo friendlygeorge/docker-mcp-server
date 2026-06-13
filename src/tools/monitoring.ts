@@ -8,6 +8,7 @@ import {
   ResourceAlertCheckSchema,
   MonitorDashboardSchema,
 } from "../types.js";
+import { sanitizeOutput } from "../docker.js";
 
 export function registerMonitoringTools(server: McpServer, docker: Dockerode): void {
   // 1. fleet_status — health status of all running containers
@@ -190,7 +191,7 @@ export function registerMonitoringTools(server: McpServer, docker: Dockerode): v
               tail: params.tail || 500,
               since: params.since ? Math.floor(new Date(params.since).getTime() / 1000) : undefined,
             });
-            const output = logStream.toString("utf-8").replace(/^[\x00-\x0f]{8}/gm, "");
+            const output = sanitizeOutput(logStream.toString("utf-8"), 100_000);
             const lines = output.split("\n");
             for (const line of lines) {
               if (regex.test(line)) {

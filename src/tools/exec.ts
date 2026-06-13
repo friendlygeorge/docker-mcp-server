@@ -1,7 +1,7 @@
 import Dockerode from "dockerode";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { ExecInContainerSchema } from "../types.js";
-import { formatError } from "../docker.js";
+import { formatError, sanitizeOutput } from "../docker.js";
 
 export function registerExecTools(server: McpServer, docker: Dockerode): void {
   server.tool(
@@ -28,7 +28,7 @@ export function registerExecTools(server: McpServer, docker: Dockerode): void {
         });
 
         const inspect = await exec.inspect();
-        const cleanOutput = output.replace(/^[\x00-\x0f]{8}/gm, "");
+        const cleanOutput = sanitizeOutput(output);
 
         return {
           content: [{

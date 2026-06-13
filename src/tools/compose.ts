@@ -10,7 +10,7 @@ import {
   ComposeLogsSchema,
   ComposeRestartSchema,
 } from "../types.js";
-import { formatError } from "../docker.js";
+import { formatError, sanitizeOutput } from "../docker.js";
 
 const execAsync = promisify(execCb);
 
@@ -114,7 +114,8 @@ export function registerComposeTools(server: McpServer): void {
         if (params.follow) args.push("-f");
         if (params.services?.length) args.push(...params.services);
         const output = runCompose(params.path, args);
-        return { content: [{ type: "text", text: output || "No logs found." }] };
+        // Use 100KB cap for log output to keep LLM context small
+        return { content: [{ type: "text", text: sanitizeOutput(output, 100_000) || "No logs found." }] };
       } catch (error) {
         return { content: [{ type: "text", text: `Error: ${formatError(error)}` }], isError: true };
       }
