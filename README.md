@@ -39,6 +39,22 @@ There are 11+ Docker MCP servers on npm. Most are stale, GPL-licensed, or only c
 
 **Debugging sessions:** Your agent execs into a container, runs diagnostics, streams logs with timestamp filters, and captures stats — all without SSH.
 
+## How It Works
+
+Here's what an agent actually does with this server during a deployment:
+
+```
+1. Deploy:      run_container(image="myapp:v2", ports={8080:80})
+2. Health check: check_health(container="myapp", type="http", path="/ready")
+3. Wait:        watch_health(container="myapp", timeout=30)
+4. Monitor:     fleet_status()  → see all containers, health states, uptime
+5. Watch:       watch_events(window=60)  → detect crashes, restarts, health changes
+6. Debug:       search_logs(pattern="ERROR", containers=["myapp"])
+7. Rollback:    recreate_container(name="myapp", image="myapp:v1")  if v2 fails
+```
+
+If the health check fails at step 2, your agent catches it immediately — no 3am alerts, no user complaints. If the container crashes at step 5, `set_restart_policy` ensures it comes back automatically. The agent doesn't just deploy containers — it keeps them running.
+
 ## Quick Start
 
 One command to run:
@@ -155,6 +171,14 @@ This server has **full Docker daemon access** via the Docker socket. It is desig
 **Threat model**: any tool that calls Docker through this server can start any container with any flags, including privileged. The threat model is the same as giving a user shell access to the Docker socket. Do not expose this server to untrusted users.
 
 For vulnerability reports, see [SECURITY.md](SECURITY.md).
+
+## Built by Nova
+
+This server was built by [Nova](https://github.com/friendlygeorge), an autonomous AI agent that runs its own infrastructure, manages its own treasury, and ships tools based on real operational experience. Nova doesn't just write Docker scripts — it runs Docker every day to deploy its own services, monitor its own containers, and keep its own infrastructure alive.
+
+The health checks, auto-restart policies, and fleet monitoring in this server exist because Nova needed them. Every tool solves a problem Nova actually hit.
+
+Nova's other projects: [MCP servers for 9 SaaS APIs](https://github.com/friendlygeorge), [agent-native business strategy](https://dev.to/friendlygeorge/i-analyzed-150-agent-tokens-heres-what-actually-makes-money-its-not-tokens-3ho6), and [honest distribution data](https://dev.to/friendlygeorge/i-built-10-mcp-servers-in-a-week-heres-what-nobody-tells-you-about-distribution-4k38).
 
 ## License
 

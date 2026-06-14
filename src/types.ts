@@ -216,3 +216,8 @@ export const ResourceAlertCheckSchema = z.object({
 });
 
 export const MonitorDashboardSchema = z.object({});
+
+// System info schemas (v0.3.3)
+export const DockerInfoSchema = z.object({});
+
+export const DiskUsageSchema = z.object({});
