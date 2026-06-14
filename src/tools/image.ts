@@ -30,7 +30,7 @@ export function registerImageTools(server: McpServer, docker: Dockerode): void {
 
   server.tool(
     "pull_image",
-    "Pull a Docker image from a registry. Returns pull progress events.",
+    "Pull a Docker image from a registry by image name (e.g., "nginx:latest"). Use list_images to see locally available images after pulling. Returns pull progress events as text. Idempotent: pulling an already-up-to-date image is a no-op. Returns an error string if the image does not exist on the registry or the pull fails.",
     PullImageSchema.shape,
     { idempotentHint: true, openWorldHint: false },
     async (params) => {

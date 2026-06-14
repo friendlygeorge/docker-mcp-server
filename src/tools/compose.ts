@@ -50,7 +50,7 @@ function runCompose(path: string, args: string[]): string {
 export function registerComposeTools(server: McpServer): void {
   server.tool(
     "compose_up",
-    "Bring up Docker Compose services from a docker-compose.yml file. Optionally build images first.",
+    "Bring up Docker Compose services from a docker-compose.yml file at path. Use compose_ps to check service states after bringing them up; use compose_logs to inspect output. Optionally rebuild images before starting (build=true). Returns a confirmation string listing which services were started. Idempotent: already-running services are left untouched. Returns an error string if the Compose file is missing or invalid.",
     ComposeUpSchema.shape,
     { idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -86,7 +86,7 @@ export function registerComposeTools(server: McpServer): void {
 
   server.tool(
     "compose_ps",
-    "List service states across a Docker Compose stack.",
+    "List service states across a Docker Compose stack defined by docker-compose.yml at path. Returns an array of services with name, state (running, exited, etc.), health status, and port mappings. Use compose_up to start services; use compose_logs to inspect output. Read-only and safe to call repeatedly. Returns an error string if the Compose file is missing.",
     ComposePsSchema.shape,
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {

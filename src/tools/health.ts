@@ -130,7 +130,7 @@ export function registerHealthTools(server: McpServer, docker: Dockerode): void 
 
   server.tool(
     "set_restart_policy",
-    "Change the restart policy of a running container without recreating it.",
+    "Change the restart policy of a running container without recreating it. Use restart_container for an immediate restart; use this tool to change the policy (always, unless-stopped, on-failure, no) for future restarts. Returns a confirmation string on success. Idempotent: setting the same policy is a no-op. Returns an error string if the container does not exist.",
     SetRestartPolicySchema.shape,
     { idempotentHint: true, openWorldHint: false },
     async (params) => {
