@@ -9,6 +9,8 @@ import {
   RemoveContainerSchema,
   RecreateContainerSchema,
   RunContainerSchema,
+  PruneContainersSchema,
+  UpdateContainerSchema,
 } from "../types.js";
 import { formatContainer, formatError, withRetry } from "../docker.js";
 
@@ -223,4 +225,108 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
       }
     }
   );
+
+  // prune_containers — remove stopped containers
+  server.tool(
+    "prune_containers",
+    "Remove all stopped Docker containers. Returns the number of containers removed and reclaimed disk space. This is a destructive operation — stopped containers and their non-persisted data will be deleted. Use list_containers first to see what will be removed. Useful for cleanup after deployments or when disk space is low.",
+    PruneContainersSchema.shape,
+    { readOnlyHint: false, idempotentHint: false, openWorldHint: false },
+    async (params) => {
+      try {
+        const filterObj: Record<string, string[]> = {};
+        if (params.filter) {
+          const parts = params.filter.split('=');
+          if (parts.length === 2) {
+            filterObj[parts[0]] = [parts[1]];
+          }
+        }
+        const result = await withRetry(
+          () => docker.pruneContainers({ filters: filterObj }),
+          { label: "prune_containers" }
+        );
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              containers_deleted: (result.ContainersDeleted || []).length,
+              space_reclaimed: result.SpaceReclaimed || 0,
+              space_reclaimed_human: formatBytes(result.SpaceReclaimed || 0),
+              deleted_ids: (result.ContainersDeleted || []).map((id: string) => id.substring(0, 12)),
+            }, null, 2),
+          }],
+        };
+      } catch (error) {
+        return { content: [{ type: "text", text: `Error: ${formatError(error)}` }], isError: true };
+      }
+    }
+  );
+
+  // update_container — update container resource limits
+  server.tool(
+    "update_container",
+    "Update a Docker container's resource limits (CPU, memory, CPU shares). Requires the container to be stopped first. Returns the updated resource limits. Use this to right-size containers based on actual usage — set CPU limits to prevent runaway processes and memory limits to prevent OOM kills.",
+    UpdateContainerSchema.shape,
+    { readOnlyHint: false, idempotentHint: false, openWorldHint: false },
+    async (params) => {
+      try {
+        const updateConfig: Record<string, any> = {};
+        if (params.cpu_limit !== undefined) {
+          updateConfig.NanoCpus = Math.round(params.cpu_limit * 1e9);
+        }
+        if (params.memory_limit !== undefined) {
+          updateConfig.Memory = parseMemory(params.memory_limit);
+        }
+        if (params.cpu_shares !== undefined) {
+          updateConfig.CpuShares = params.cpu_shares;
+        }
+
+        if (Object.keys(updateConfig).length === 0) {
+          return { content: [{ type: "text", text: "Error: No resource limits specified. Provide at least one of: cpu_limit, memory_limit, cpu_shares." }], isError: true };
+        }
+
+        const container = docker.getContainer(params.container_id);
+        await withRetry(() => container.update(updateConfig), { label: "update_container" });
+
+        // Inspect to return current state
+        const info = await withRetry(() => container.inspect(), { label: "update_container_inspect" });
+        const hostConfig = info.HostConfig || {};
+
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              container: params.container_id,
+              state: info.State?.Status,
+              resource_limits: {
+                cpu_limit_cores: hostConfig.NanoCpus ? hostConfig.NanoCpus / 1e9 : null,
+                memory_limit: hostConfig.Memory || null,
+                memory_limit_human: hostConfig.Memory ? formatBytes(hostConfig.Memory) : null,
+                cpu_shares: hostConfig.CpuShares || null,
+              },
+            }, null, 2),
+          }],
+        };
+      } catch (error) {
+        return { content: [{ type: "text", text: `Error: ${formatError(error)}` }], isError: true };
+      }
+    }
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+function parseMemory(mem: string): number {
+  const match = mem.match(/^(\d+)(b|k|m|g|t)?$/i);
+  if (!match) throw new Error(`Invalid memory format: ${mem}`);
+  const value = parseInt(match[1]);
+  const unit = (match[2] || 'b').toLowerCase();
+  const multipliers: Record<string, number> = { b: 1, k: 1024, m: 1024**2, g: 1024**3, t: 1024**4 };
+  return value * (multipliers[unit] || 1);
 }

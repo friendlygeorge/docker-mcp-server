@@ -5,6 +5,7 @@ import {
   PullImageSchema,
   BuildImageSchema,
   RemoveImageSchema,
+  PruneImagesSchema,
 } from "../types.js";
 import { formatImage, formatError, withRetry } from "../docker.js";
 
@@ -30,7 +31,7 @@ export function registerImageTools(server: McpServer, docker: Dockerode): void {
 
   server.tool(
     "pull_image",
-    "Pull a Docker image from a registry by image name (e.g., "nginx:latest"). Use list_images to see locally available images after pulling. Returns pull progress events as text. Idempotent: pulling an already-up-to-date image is a no-op. Returns an error string if the image does not exist on the registry or the pull fails.",
+    "Pull a Docker image from a registry by image name (e.g. nginx:latest). Use list_images to see locally available images after pulling. Returns pull progress events as text. Idempotent: pulling an already-up-to-date image is a no-op. Returns an error string if the image does not exist on the registry or the pull fails.",
     PullImageSchema.shape,
     { idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -93,4 +94,56 @@ export function registerImageTools(server: McpServer, docker: Dockerode): void {
       }
     }
   );
+
+  // prune_images — remove unused Docker images
+  server.tool(
+    "prune_images",
+    "Remove unused Docker images (dangling and unreferenced). Returns the number of images deleted and reclaimed disk space. Only removes images not used by any container. Use list_images first to see what will be removed. Useful for reclaiming disk space after builds or when switching base images frequently.",
+    PruneImagesSchema.shape,
+    { readOnlyHint: false, idempotentHint: false, openWorldHint: false },
+    async (params) => {
+      try {
+        const filterObj: Record<string, string[]> = {};
+        if (params.filter) {
+          try {
+            const parsed = JSON.parse(params.filter);
+            Object.assign(filterObj, parsed);
+          } catch {
+            // If not JSON, try key=value format
+            const parts = params.filter.split('=');
+            if (parts.length === 2) {
+              filterObj[parts[0]] = [parts[1]];
+            }
+          }
+        }
+        const result = await withRetry(
+          () => docker.pruneImages({ filters: filterObj }),
+          { label: "prune_images" }
+        );
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              images_deleted: (result.ImagesDeleted || []).length,
+              space_reclaimed: result.SpaceReclaimed || 0,
+              space_reclaimed_human: formatBytes(result.SpaceReclaimed || 0),
+              deleted_ids: (result.ImagesDeleted || []).map((img: any) =>
+                typeof img === 'string' ? img.substring(0, 19) : img.Deleted?.substring(0, 19) || 'unknown'
+              ),
+            }, null, 2),
+          }],
+        };
+      } catch (error) {
+        return { content: [{ type: "text", text: `Error: ${formatError(error)}` }], isError: true };
+      }
+    }
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }

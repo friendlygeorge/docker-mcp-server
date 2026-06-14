@@ -186,6 +186,21 @@ export const PruneVolumesSchema = z.object({
   filter: z.string().optional().describe("Filter by label (e.g., 'label=key=value')"),
 });
 
+export const PruneContainersSchema = z.object({
+  filter: z.string().optional().describe("Filter by label (e.g., 'label=key=value')"),
+});
+
+export const PruneImagesSchema = z.object({
+  filter: z.string().optional().describe('Docker filters JSON (e.g. "dangling=true")'),
+});
+
+export const UpdateContainerSchema = z.object({
+  container_id: z.string().describe('Container ID or name'),
+  cpu_limit: z.number().optional().describe('CPU limit in cores (e.g. 1.5 for 1.5 CPUs)'),
+  memory_limit: z.string().optional().describe('Memory limit (e.g. "512m", "1g", "2048m")'),
+  cpu_shares: z.number().optional().describe('CPU shares (relative weight, 0-1024)'),
+});
+
 
 // Monitoring schemas (v0.2.0)
 export const ContainerHealthStatusSchema = z.object({});

@@ -1,6 +1,26 @@
 # Changelog
 
+## [0.3.5] - 2026-06-14
+
+### Added
+- `prune_containers` — Remove all stopped Docker containers with optional label filters
+- `prune_images` — Remove unused Docker images (dangling and unreferenced) with optional filters
+- `update_container` — Update container resource limits (CPU, memory, CPU shares)
+
+### Changed
+- Improved tool descriptions for Glama Quality optimization (commit 255cf60)
+- Added CI workflow (GitHub Actions, Node 18/20/22)
+- Added `relatedServers` to glama.json
+
+
 All notable changes to @supernova123/docker-mcp-server will be documented in this file.
+
+## [0.3.4] - 2026-06-14
+
+### Added
+- **copy_from_container** tool — copy files from a container to the host filesystem
+- **copy_to_container** tool — copy files from the host to a container filesystem
+- Glama "Try it now" link in README for zero-install tool testing
 
 ## [0.3.3] - 2026-06-13
 
