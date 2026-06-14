@@ -10,6 +10,7 @@ import { registerNetworkTools } from "./tools/network.js";
 import { registerVolumeTools } from "./tools/volume.js";
 import { registerMonitoringTools } from "./tools/monitoring.js";
 import { registerSystemTools } from "./tools/system.js";
+import { registerTransferTools } from "./tools/transfer.js";
 
 export interface ServerOptions {
   timeoutMs?: number;
@@ -32,6 +33,7 @@ export function createServer(docker: Dockerode, options?: ServerOptions): McpSer
   registerVolumeTools(server, docker);
   registerMonitoringTools(server, docker);
   registerSystemTools(server, docker);
+  registerTransferTools(server, docker);
 
   return server;
 }

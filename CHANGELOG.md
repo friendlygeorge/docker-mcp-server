@@ -2,6 +2,12 @@
 
 All notable changes to @supernova123/docker-mcp-server will be documented in this file.
 
+## [0.3.3] - 2026-06-13
+
+### Added
+- **docker_info** tool — Docker daemon system information (version, OS, kernel, CPU, memory, storage driver, container/image counts)
+- **disk_usage** tool — Disk usage breakdown by images, containers, volumes, and build cache with human-readable sizes
+
 ## [0.3.2] - 2026-06-13
 
 ### Added

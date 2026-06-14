@@ -221,3 +221,16 @@ export const MonitorDashboardSchema = z.object({});
 export const DockerInfoSchema = z.object({});
 
 export const DiskUsageSchema = z.object({});
+
+// File transfer schemas (v0.3.4)
+export const CopyFromContainerSchema = z.object({
+  container_id: z.string().describe("Container ID or name"),
+  container_path: z.string().describe("Path inside container to copy from (e.g., '/etc/nginx/nginx.conf')"),
+});
+
+export const CopyToContainerSchema = z.object({
+  container_id: z.string().describe("Container ID or name"),
+  container_path: z.string().describe("Destination path inside container (e.g., '/app/config.json')"),
+  content: z.string().describe("File content to write (plain text)"),
+  mode: z.number().optional().describe("File permissions in octal (e.g., 0o644 = 420). Default: 0o644"),
+});
