@@ -40,7 +40,7 @@ const authResp = await fetch(`${REGISTRY_URL}/v0.1/auth/github-oidc`, {
 });
 
 const authData = await authResp.json();
-const jwt = authData.token || authData.jwt;
+const jwt = authData.registry_token || authData.token || authData.jwt;
 
 if (!jwt) {
   console.error('Failed to authenticate:', JSON.stringify(authData));
