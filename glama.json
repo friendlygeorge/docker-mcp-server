@@ -4,7 +4,7 @@
     "friendlygeorge"
   ],
   "title": "Docker MCP Server",
-  "description": "31 tools for AI agent Docker management \u2014 container lifecycle, Compose stack operations, health checks, log streaming, and fleet monitoring through the Model Context Protocol.",
+  "description": "42 tools for AI agent Docker management \u2014 container lifecycle, Compose stack operations, health checks, log streaming, fleet monitoring, file transfer, and resource management through the Model Context Protocol.",
   "tags": [
     "docker",
     "containers",
