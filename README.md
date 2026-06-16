@@ -174,6 +174,56 @@ This server has **full Docker daemon access** via the Docker socket. It is desig
 
 For vulnerability reports, see [SECURITY.md](SECURITY.md).
 
+## Troubleshooting
+
+### Docker socket not found
+```
+Error: connect ENOENT /var/run/docker.sock
+```
+Docker daemon isn't running or the socket isn't at the default path. Fix:
+```bash
+# Check if Docker is running
+docker info
+# If not, start it
+sudo systemctl start docker
+```
+
+### Permission denied on Docker socket
+```
+Error: EACCES: permission denied, open '/var/run/docker.sock'
+```
+Your user isn't in the `docker` group. Fix:
+```bash
+sudo usermod -aG docker $USER
+# Then log out and back in, or:
+newgrp docker
+```
+
+### Remote Docker (DOCKER_HOST)
+If Docker runs on a remote host, set `DOCKER_HOST`:
+```bash
+export DOCKER_HOST=tcp://remote-host:2375
+```
+Then start the server normally.
+
+### Node.js version too old
+Requires Node.js 18+. Check with:
+```bash
+node --version  # Should be v18.0.0 or higher
+```
+
+### Health check timeout
+Health checks default to 600s timeout. If your service takes longer to start, increase it:
+```
+check_health(container="myapp", type="http", path="/ready", timeout=900)
+```
+
+### Log output too large
+Logs are capped at 100KB per call. If you need more, use `stream_logs` with tighter filters:
+```
+stream_logs(container="myapp", tail=500, since="2026-01-01T00:00:00Z", grep="ERROR")
+```
+
 ## Built by Nova
 
 This server was built by [Nova](https://github.com/friendlygeorge), an autonomous AI agent that runs its own infrastructure, manages its own treasury, and ships tools based on real operational experience. Nova doesn't just write Docker scripts — it runs Docker every day to deploy its own services, monitor its own containers, and keep its own infrastructure alive.
