@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.4.0 (2026-06-16)
+
+### Added
+- **Registry operations:** `registry_login`, `registry_search`, `registry_push` — authenticate with Docker Hub, ECR, ACR, GCR; search for images; push images to registries
+- **Security scanning:** `scan_image`, `vulnerability_report` — scan Docker images for CVEs using Trivy; generate detailed vulnerability reports with remediation recommendations
+- **Context management:** `list_contexts`, `use_context`, `inspect_context` — switch between local/remote Docker hosts; inspect context configurations
+- 8 new tools (42 → 50 total)
+- Tier 1 features from v0.4.0 roadmap (registry, security, context)
+
+### Changed
+- Version bumped from 0.3.5 to 0.4.0
+- Server name updated in McpServer constructor
+
+
+
 ## [0.3.5] - 2026-06-14
 
 ### Added

@@ -249,3 +249,45 @@ export const CopyToContainerSchema = z.object({
   content: z.string().describe("File content to write (plain text)"),
   mode: z.number().optional().describe("File permissions in octal (e.g., 0o644 = 420). Default: 0o644"),
 });
+
+// Registry operation schemas (v0.4.0)
+export const RegistryLoginSchema = z.object({
+  username: z.string().describe("Registry username"),
+  password: z.string().describe("Registry password or access token"),
+  server: z.string().optional().describe("Registry server URL (default: Docker Hub)"),
+});
+
+export const RegistrySearchSchema = z.object({
+  term: z.string().describe("Search term for Docker Hub images"),
+});
+
+export const RegistryPushSchema = z.object({
+  image: z.string().describe("Image name to push (e.g., 'myregistry.com/myimage')"),
+  tag: z.string().optional().describe("Image tag (default: 'latest')"),
+});
+
+// Security scanning schemas (v0.4.0)
+export const ScanImageSchema = z.object({
+  image: z.string().describe("Docker image name to scan (e.g., 'nginx:latest')"),
+  tag: z.string().optional().describe("Image tag to scan (default: 'latest')"),
+  severity: z.string().optional().describe("Comma-separated severities to include (default: 'CRITICAL,HIGH,MEDIUM')"),
+  timeout: z.number().optional().describe("Max seconds to wait for scan (default: 120)"),
+});
+
+export const VulnerabilityReportSchema = z.object({
+  image: z.string().describe("Docker image name for vulnerability report"),
+  tag: z.string().optional().describe("Image tag (default: 'latest')"),
+  severity: z.string().optional().describe("Severities to include (default: 'CRITICAL,HIGH,MEDIUM,LOW')"),
+  timeout: z.number().optional().describe("Max seconds for report generation (default: 180)"),
+});
+
+// Docker context schemas (v0.4.0)
+export const ListContextsSchema = z.object({});
+
+export const UseContextSchema = z.object({
+  context_name: z.string().describe("Name of the Docker context to activate"),
+});
+
+export const InspectContextSchema = z.object({
+  context_name: z.string().describe("Name of the Docker context to inspect"),
+});

@@ -11,6 +11,9 @@ import { registerVolumeTools } from "./tools/volume.js";
 import { registerMonitoringTools } from "./tools/monitoring.js";
 import { registerSystemTools } from "./tools/system.js";
 import { registerTransferTools } from "./tools/transfer.js";
+import { registerRegistryTools } from "./tools/registry.js";
+import { registerSecurityTools } from "./tools/security.js";
+import { registerContextTools } from "./tools/context.js";
 
 export interface ServerOptions {
   timeoutMs?: number;
@@ -19,7 +22,7 @@ export interface ServerOptions {
 export function createServer(docker: Dockerode, options?: ServerOptions): McpServer {
   const server = new McpServer({
     name: "docker-mcp-server",
-    version: "0.3.4",
+    version: "0.4.0",
   });
 
   // Register all tool categories
@@ -34,6 +37,9 @@ export function createServer(docker: Dockerode, options?: ServerOptions): McpSer
   registerMonitoringTools(server, docker);
   registerSystemTools(server, docker);
   registerTransferTools(server, docker);
+  registerRegistryTools(server, docker);
+  registerSecurityTools(server, docker);
+  registerContextTools(server, docker);
 
   return server;
 }
