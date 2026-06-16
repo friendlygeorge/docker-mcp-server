@@ -55,7 +55,7 @@ Here's what an agent actually does with this server during a deployment:
 
 If the health check fails at step 2, your agent catches it immediately — no 3am alerts, no user complaints. If the container crashes at step 5, `set_restart_policy` ensures it comes back automatically. The agent doesn't just deploy containers — it keeps them running.
 
-**[▶ Try it now on Glama](https://glama.ai/mcp/servers/friendlygeorge/docker-mcp-server)** — test all 31 tools in your browser, no install required.
+**[▶ Try it now on Glama](https://glama.ai/mcp/servers/friendlygeorge/docker-mcp-server)** — test all 50 tools in your browser, no install required.
 
 ## Quick Start
 
