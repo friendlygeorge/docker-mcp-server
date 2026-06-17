@@ -10,6 +10,8 @@
 
 **The Docker MCP server designed for agents that need their containers to stay running.**
 
+> **Runs locally. No API keys. No paid plan.** Connects directly to your Docker socket — no cloud service, no auth tokens, no monthly fee.
+>
 > **Without this:** Your agent deploys a container, it crashes at 3am, and nobody notices until the user complains. Compose stacks drift. Health checks are manual. Logs are scattered across terminals.
 >
 > **With this:** Your agent checks health, watches for readiness, restarts crashed containers, and follows logs, all through a single MCP interface. Containers stay running because your agent knows how to keep them running.
@@ -21,6 +23,7 @@ There are 11+ Docker MCP servers on npm. Most are stale, GPL-licensed, or only c
 | | This server | ckreiling/mcp-server-docker | docker/hub-mcp |
 |---|---|---|---|
 | **License** | MIT | GPL-3.0 | Apache-2.0 |
+| **Runs locally** | ✅ No API keys, no paid plan | ✅ | ❌ Requires Docker Hub auth |
 | **Last updated** | Active | Jun 2025 (stale) | Active |
 | **Health checks** | ✅ HTTP/TCP/exec probes | ❌ | ❌ |
 | **Auto-restart** | ✅ set_restart_policy | ❌ | ❌ |
