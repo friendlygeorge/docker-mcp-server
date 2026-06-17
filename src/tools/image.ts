@@ -54,7 +54,7 @@ export function registerImageTools(server: McpServer, docker: Dockerode): void {
 
   server.tool(
     "build_image",
-    "Build a Docker image from a Dockerfile or build context directory. The path should contain a Dockerfile or point to a directory with one. Use tag to name the resulting image (e.g., "myapp:latest"). Returns build output log. Use list_images to verify the build succeeded. Returns an error string if the Dockerfile is missing or the build fails.",
+    "Build a Docker image from a Dockerfile or build context directory. The path should contain a Dockerfile or point to a directory with one. Use tag to name the resulting image (e.g., myapp:latest). Returns build output log. Use list_images to verify the build succeeded. Returns an error string if the Dockerfile is missing or the build fails.",
     BuildImageSchema.shape,
     { idempotentHint: true, openWorldHint: false },
     async (params) => {

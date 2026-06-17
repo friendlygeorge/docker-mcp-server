@@ -75,7 +75,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
 
   server.tool(
     "stop_container",
-    "Stop a running Docker container by ID or name with optional timeout. Sends SIGTERM, then SIGKILL after timeout seconds (default 10s). Use restart_container to restart without stopping; use remove_container to delete entirely. Returns a confirmation string. Handles the 304 "already stopped" case gracefully. Returns an error string if the container does not exist.",
+    "Stop a running Docker container by ID or name with optional timeout. Sends SIGTERM, then SIGKILL after timeout seconds (default 10s). Use restart_container to restart without stopping; use remove_container to delete entirely. Returns a confirmation string. Handles the 304 already-stopped case gracefully. Returns an error string if the container does not exist.",
     StopContainerSchema.shape,
     { destructiveHint: true, openWorldHint: false },
     async (params) => {
