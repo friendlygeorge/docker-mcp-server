@@ -6,7 +6,7 @@ import { formatError, withRetry } from "../docker.js";
 export function registerNetworkTools(server: McpServer, docker: Dockerode): void {
   server.tool(
     "list_networks",
-    "List Docker networks with optional filter. Returns network IDs, names, drivers, and scopes.",
+    "List Docker networks on the local host with optional filter. Returns an array of objects with ID, name, driver (bridge/overlay/host), and scope (local/swarm). Use inspect_network (via docker inspect) for full configuration. Read-only and safe to call repeatedly.",
     ListNetworksSchema.shape,
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -38,7 +38,7 @@ export function registerNetworkTools(server: McpServer, docker: Dockerode): void
 
   server.tool(
     "list_volumes",
-    "List Docker volumes with optional filter. Returns volume names, drivers, mount points, and labels.",
+    "List Docker volumes on the local host with optional filter. Returns an array of objects with name, driver, mountpoint, labels, and scope. Use inspect_volume for full configuration of a single volume; use create_volume to add new ones. Read-only and safe to call repeatedly.",
     ListVolumesSchema.shape,
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {

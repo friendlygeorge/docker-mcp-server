@@ -68,7 +68,7 @@ export function registerComposeTools(server: McpServer): void {
 
   server.tool(
     "compose_down",
-    "Tear down Docker Compose services. Optionally remove named volumes.",
+    "Tear down Docker Compose services defined by docker-compose.yml at path. Stops and removes containers, networks created by compose_up. Use volumes=true to also remove named volumes (destructive — data is lost). Returns a confirmation string listing stopped services. Use compose_ps to verify teardown. Returns an error string if the Compose file is missing.",
     ComposeDownSchema.shape,
     { destructiveHint: true, openWorldHint: false },
     async (params) => {
@@ -124,7 +124,7 @@ export function registerComposeTools(server: McpServer): void {
 
   server.tool(
     "compose_restart",
-    "Restart Docker Compose services. Restart specific services or the entire stack.",
+    "Restart Docker Compose services defined by docker-compose.yml at path. Restart specific services or the entire stack. Unlike stop+start, this preserves container configuration. The timeout parameter controls how long to wait before force-killing (default 10s). Returns a confirmation string. Use compose_ps to verify state after restart. Returns an error string if the Compose file is missing.",
     ComposeRestartSchema.shape,
     { destructiveHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {

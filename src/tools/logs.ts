@@ -31,7 +31,7 @@ export function registerLogsTools(server: McpServer, docker: Dockerode): void {
 
   server.tool(
     "container_stats",
-    "Get real-time resource usage statistics for a Docker container (CPU, memory, network, I/O).",
+    "Get real-time resource usage statistics for a Docker container by ID or name. Use container_stats for one container; use container_resource_usage (monitoring tools) for fleet-wide stats. Returns JSON with CPU percent, memory usage/limit/percent, network I/O bytes, and block I/O bytes. Read-only and safe to call repeatedly. Returns an error string if the container does not exist or is not running.",
     ContainerStatsSchema.shape,
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {

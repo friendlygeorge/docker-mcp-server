@@ -6,7 +6,7 @@ import { formatError, withRetry } from "../docker.js";
 export function registerHealthTools(server: McpServer, docker: Dockerode): void {
   server.tool(
     "check_health",
-    "Run a health probe against a container. Supports HTTP, TCP, and exec probes. Auto-detects from container HEALTHCHECK if available.",
+    "Run a health probe against a container by ID or name. Supports HTTP (checks status code), TCP (checks port open), and exec (runs command inside container). Auto-detects probe type from the container's HEALTHCHECK configuration. Returns probe result with status (healthy/unhealthy/starting) and output. Use watch_health to poll until healthy. Read-only and safe to call repeatedly. Returns an error string if the container has no health check configured.",
     CheckHealthSchema.shape,
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -76,7 +76,7 @@ export function registerHealthTools(server: McpServer, docker: Dockerode): void 
 
   server.tool(
     "watch_health",
-    "Poll a container's health status until it becomes healthy or times out. Useful for waiting on service startup.",
+    "Poll a container health status until it becomes healthy or times out. Use check_health for a single probe; use watch_health to wait for readiness. The interval parameter controls polling frequency (default 5s); timeout controls max wait (default 60s). Returns the final health status. Returns an error string if the container has no health check.",
     WatchHealthSchema.shape,
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {

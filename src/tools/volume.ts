@@ -11,7 +11,7 @@ import { formatError, withRetry } from "../docker.js";
 export function registerVolumeTools(server: McpServer, docker: Dockerode): void {
   server.tool(
     "create_volume",
-    "Create a Docker volume with optional driver, labels, and options. Returns volume name, driver, and mountpoint.",
+    "Create a Docker volume with optional driver, labels, and options. Returns volume name, driver, and mount point. Use inspect_volume to verify creation; use list_volumes to see all volumes. Returns an error string if the volume name is already in use.",
     CreateVolumeSchema.shape,
     { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -42,7 +42,7 @@ export function registerVolumeTools(server: McpServer, docker: Dockerode): void 
 
   server.tool(
     "inspect_volume",
-    "Inspect a Docker volume. Returns detailed info including name, driver, mountpoint, labels, scope, and usage data.",
+    "Inspect a Docker volume by name. Returns detailed info including name, driver, mountpoint, labels, scope, and options. Use list_volumes to find volume names; use remove_volume to delete. Returns an error string if the volume does not exist.",
     InspectVolumeSchema.shape,
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -72,7 +72,7 @@ export function registerVolumeTools(server: McpServer, docker: Dockerode): void 
 
   server.tool(
     "remove_volume",
-    "Remove a Docker volume. Use force=true to remove even if in use by containers.",
+    "Remove a Docker volume by name. Requires the volume to be unused unless force=true is set (which removes even if mounted). Use prune_volumes to remove all unused volumes at once. Returns a confirmation string. Returns an error string if the volume does not exist.",
     RemoveVolumeSchema.shape,
     { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -93,7 +93,7 @@ export function registerVolumeTools(server: McpServer, docker: Dockerode): void 
 
   server.tool(
     "prune_volumes",
-    "Remove all unused Docker volumes. Returns count of removed volumes and reclaimed space.",
+    "Remove all unused Docker volumes (not mounted by any container). Returns the number of volumes removed and reclaimed disk space. Use list_volumes to see what exists before pruning. Safe to call repeatedly — no-op when no unused volumes exist.",
     PruneVolumesSchema.shape,
     { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     async (params) => {

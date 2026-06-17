@@ -17,7 +17,7 @@ import { formatContainer, formatError, withRetry } from "../docker.js";
 export function registerContainerTools(server: McpServer, docker: Dockerode): void {
   server.tool(
     "list_containers",
-    "List Docker containers with optional filters (state, label, name). Returns container IDs, names, images, states, ports, and labels.",
+    "List Docker containers with optional filters (state, name, label). Returns an array of objects with ID, name, image, state (running/exited/etc.), ports, and labels. Use all=true to include stopped containers (default shows only running). Use inspect_container for full configuration of a single container. Read-only and safe to call repeatedly.",
     ListContainersSchema.shape,
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -43,7 +43,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
 
   server.tool(
     "inspect_container",
-    "Get detailed configuration and state of a Docker container by ID or name.",
+    "Get detailed configuration and state of a Docker container by ID or name. Returns full JSON including image, command, environment variables, network settings, mount points, restart policy, and health status. Use list_containers to find container IDs; use container_stats for resource usage. Returns an error string if the container does not exist.",
     InspectContainerSchema.shape,
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -59,7 +59,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
 
   server.tool(
     "start_container",
-    "Start a stopped Docker container by ID or name.",
+    "Start a stopped Docker container by ID or name. Use list_containers to find stopped containers (state=exited). Returns a confirmation string on success. Idempotent: starting an already-running container is a no-op. Returns an error string if the container does not exist.",
     StartContainerSchema.shape,
     { idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -75,7 +75,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
 
   server.tool(
     "stop_container",
-    "Stop a running Docker container by ID or name with optional timeout.",
+    "Stop a running Docker container by ID or name with optional timeout. Sends SIGTERM, then SIGKILL after timeout seconds (default 10s). Use restart_container to restart without stopping; use remove_container to delete entirely. Returns a confirmation string. Handles the 304 "already stopped" case gracefully. Returns an error string if the container does not exist.",
     StopContainerSchema.shape,
     { destructiveHint: true, openWorldHint: false },
     async (params) => {
@@ -111,7 +111,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
 
   server.tool(
     "remove_container",
-    "Remove a Docker container by ID or name. Use force to remove running containers.",
+    "Remove a Docker container by ID or name. Requires the container to be stopped first unless force=true is set (which stops and removes in one step). Use stop_container for graceful shutdown; use restart_container to restart. Returns a confirmation string. Returns an error string if the container does not exist or is running without force.",
     RemoveContainerSchema.shape,
     { destructiveHint: true, openWorldHint: false },
     async (params) => {
@@ -127,7 +127,7 @@ export function registerContainerTools(server: McpServer, docker: Dockerode): vo
 
   server.tool(
     "recreate_container",
-    "Recreate a container with the same configuration (stop, remove, re-create). Useful for applying config changes.",
+    "Recreate a Docker container with the same configuration (stop, remove, re-create). Useful for applying config changes without手动编写 run commands. Preserves image, env, ports, volumes, and labels from the original. Returns a confirmation string with the new container ID. Returns an error string if the original container does not exist.",
     RecreateContainerSchema.shape,
     { destructiveHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {

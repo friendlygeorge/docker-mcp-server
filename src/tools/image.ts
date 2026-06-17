@@ -12,7 +12,7 @@ import { formatImage, formatError, withRetry } from "../docker.js";
 export function registerImageTools(server: McpServer, docker: Dockerode): void {
   server.tool(
     "list_images",
-    "List Docker images with optional filters. Returns image IDs, tags, sizes, and creation dates.",
+    "List Docker images on the local host with optional filters. Returns an array of objects with ID, tags, size (bytes), and creation date. Use inspect_image (via docker inspect) for full metadata. Read-only and safe to call repeatedly. Returns an empty array if no images match the filter.",
     ListImagesSchema.shape,
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -54,7 +54,7 @@ export function registerImageTools(server: McpServer, docker: Dockerode): void {
 
   server.tool(
     "build_image",
-    "Build a Docker image from a Dockerfile or build context path.",
+    "Build a Docker image from a Dockerfile or build context directory. The path should contain a Dockerfile or point to a directory with one. Use tag to name the resulting image (e.g., "myapp:latest"). Returns build output log. Use list_images to verify the build succeeded. Returns an error string if the Dockerfile is missing or the build fails.",
     BuildImageSchema.shape,
     { idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -81,7 +81,7 @@ export function registerImageTools(server: McpServer, docker: Dockerode): void {
 
   server.tool(
     "remove_image",
-    "Remove a Docker image by name or ID. Use force to remove even if tagged.",
+    "Remove a Docker image by name or ID. Use force=true to remove even if tagged or referenced by stopped containers. Use list_images to find image IDs; use prune_images to remove all unused images. Returns a confirmation string. Returns an error string if the image does not exist or is in use without force.",
     RemoveImageSchema.shape,
     { destructiveHint: true, openWorldHint: false },
     async (params) => {

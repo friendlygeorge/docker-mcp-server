@@ -6,7 +6,7 @@ import { formatError, sanitizeOutput } from "../docker.js";
 export function registerExecTools(server: McpServer, docker: Dockerode): void {
   server.tool(
     "exec_in_container",
-    "Execute a command inside a running Docker container. Returns stdout, stderr, and exit code.",
+    "Execute a command inside a running Docker container by ID or name. Returns stdout, stderr, and exit code as JSON. Use start_container to ensure the container is running first. The command is executed as the container's default user unless user is specified. Returns an error string if the container is not running or the command fails.",
     ExecInContainerSchema.shape,
     { openWorldHint: false },
     async (params) => {

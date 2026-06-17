@@ -60,7 +60,7 @@ interface DiskUsageResult {
 export function registerSystemTools(server: McpServer, docker: Dockerode): void {
   server.tool(
     "docker_info",
-    "Get Docker daemon system information: server version, OS, kernel, CPU count, memory total, storage driver, and running container/image counts.",
+    "Get Docker daemon system information: server version, OS, kernel, CPU count, memory total, storage driver, and runtime. Returns a JSON object with all daemon metadata. Use disk_usage for space breakdown. Read-only and safe to call repeatedly.",
     DockerInfoSchema.shape,
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
@@ -96,7 +96,7 @@ export function registerSystemTools(server: McpServer, docker: Dockerode): void 
 
   server.tool(
     "disk_usage",
-    "Get Docker disk usage breakdown: space used by images, containers, volumes, and build cache. Shows total and reclaimable space.",
+    "Get Docker disk usage breakdown: space used by images, containers, volumes, and build cache. Shows total and per-item sizes with reclaimable space. Use docker_info for daemon metadata; use list_images/list_containers for item details. Read-only and safe to call repeatedly.",
     DiskUsageSchema.shape,
     { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
     async (params) => {
