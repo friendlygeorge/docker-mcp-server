@@ -5,8 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![MCP](https://img.shields.io/badge/MCP-compatible-green)](https://modelcontextprotocol.io)
 [![Claude Desktop](https://img.shields.io/badge/Claude%20Desktop-compatible-purple)](https://claude.ai)
-[![Glama](https://glama.ai/mcp/servers/friendlygeorge/docker-mcp-server/badges/card.svg)](https://glama.ai/mcp/servers/friendlygeorge/docker-mcp-server)
-[![Glama Score](https://glama.ai/mcp/servers/friendlygeorge/docker-mcp-server/badges/score.svg)](https://glama.ai/mcp/servers/friendlygeorge/docker-mcp-server)
+
 [![Awesome](https://awesome.re/badge.svg)](https://awesome.re) <!-- In [awesome-mcp-servers](https://github.com/punkpeye/awesome-mcp-servers) -->
 
 **The Docker MCP server designed for agents that need their containers to stay running.**
