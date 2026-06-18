@@ -14,6 +14,6 @@
     { "tag": "v1", "new_sqlite_classes": ["McpAgentDO"] }
   ],
   "kv_namespaces": [
-    { "binding": "API_KEYS", "id": "placeholder-api-keys" }
+    { "binding": "API_KEYS", "id": "988c98e6709e48c8aa9858258023f2e7" }
   ]
 }
