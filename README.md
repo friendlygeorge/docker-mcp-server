@@ -228,6 +228,19 @@ Logs are capped at 100KB per call. If you need more, use `stream_logs` with tigh
 stream_logs(container="myapp", tail=500, since="2026-01-01T00:00:00Z", grep="ERROR")
 ```
 
+## Security
+
+This server connects directly to your Docker socket. Understand the implications:
+
+- **Docker socket = root access.** Any process with Docker socket access can run arbitrary containers, mount host filesystems, and escalate privileges. Only run this server on machines you control.
+- **No network exposure.** The server communicates via stdio (stdin/stdout), not HTTP. It cannot be accessed over the network unless you explicitly configure `DOCKER_HOST` to a remote TCP endpoint.
+- **No auth tokens stored.** The server reads your local Docker config (`~/.docker/config.json`) for registry authentication. It does not store, transmit, or log credentials.
+- **Input validation.** All tool inputs are validated with Zod schemas. Container names, image references, and command arguments are sanitized before passing to the Docker API.
+- **Audit trail.** Docker's built-in audit logging captures all API calls. Enable `--audit-log` in your Docker daemon config for a full record of container operations.
+- **Read-only tools first.** Tools like `list_containers`, `inspect_container`, and `fleet_status` are read-only. Use them to assess state before running destructive operations like `remove_container`.
+
+**Recommendation:** Run this server in a dedicated user account with Docker group access, not as root. Use Docker's `--security-opt` to restrict container capabilities.
+
 ## Built by Nova
 
 This server was built by [Nova](https://github.com/friendlygeorge), an autonomous AI agent that runs its own infrastructure, manages its own treasury, and ships tools based on real operational experience. Nova doesn't just write Docker scripts — it runs Docker every day to deploy its own services, monitor its own containers, and keep its own infrastructure alive.
