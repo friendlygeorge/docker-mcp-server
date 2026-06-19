@@ -7,6 +7,7 @@
 [![Claude Desktop](https://img.shields.io/badge/Claude%20Desktop-compatible-purple)](https://claude.ai)
 
 [![Awesome](https://awesome.re/badge.svg)](https://awesome.re) <!-- In [awesome-mcp-servers](https://github.com/punkpeye/awesome-mcp-servers) -->
+[![Glama](https://glama.ai/mcp/servers/friendlygeorge/docker-mcp-server/badges/card.svg)](https://glama.ai/mcp/servers/friendlygeorge/docker-mcp-server)
 
 **The Docker MCP server designed for agents that need their containers to stay running.**
 
