@@ -22,7 +22,7 @@ export interface ServerOptions {
 export function createServer(docker: Dockerode, options?: ServerOptions): McpServer {
   const server = new McpServer({
     name: "docker-mcp-server",
-    version: "0.4.0",
+    version: "0.4.1",
   });
 
   // Register all tool categories
