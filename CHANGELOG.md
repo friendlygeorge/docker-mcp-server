@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.2 (2026-06-20)
+
+### Changed
+- Added `homepage` and `bugs` fields to package.json for npm registry metadata completeness
+
+## 0.4.1 (2026-06-18)
+
+### Changed
+- Expanded npm keywords from 27 to 51 for search visibility
+- Fixed server version string to match package.json
+
 ## 0.4.0 (2026-06-16)
 
 ### Added
